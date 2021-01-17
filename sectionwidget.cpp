@@ -17,8 +17,8 @@ void SectionWidget::paintEvent(QPaintEvent*)
     painter.setRenderHint(QPainter::Antialiasing, true);
 
     drawHeader(painter);
-    drawEvents(painter);
     drawSections(painter);
+    drawEvents(painter);
 }
 
 QPair<int, int> SectionWidget::timeWindow()
@@ -33,16 +33,17 @@ QPair<int, int> SectionWidget::timeWindow()
             max = event.timeNS;
     }
 
-    for (auto& section : m_project.sections()) {
-        int sectionStart = section.absoluteRange().first;
-        int sectionEnd = section.absoluteRange().second;
-        Q_ASSERT(sectionEnd > sectionStart);
+    for (auto& bus : m_project.buses())
+        for (auto& section : bus.sections) {
+            int sectionStart = section.absoluteRange().first;
+            int sectionEnd = section.absoluteRange().second;
+            Q_ASSERT(sectionEnd > sectionStart);
 
-        if (sectionStart < min)
-            min = sectionStart;
-        if (sectionEnd > max)
-            max = sectionEnd;
-    }
+            if (sectionStart < min)
+                min = sectionStart;
+            if (sectionEnd > max)
+                max = sectionEnd;
+        }
 
     return { min - m_nsMargin, max + m_nsMargin };
 }
@@ -72,11 +73,12 @@ void SectionWidget::drawHeader(QPainter& painter)
 
     for (auto& event : m_project.events())
         timePoints.insert(event.timeNS);
-    for (auto& section : m_project.sections()) {
-        auto range = section.absoluteRange();
-        timePoints.insert(range.first);
-        timePoints.insert(range.second);
-    }
+    for (auto& bus : m_project.buses())
+        for (auto& section : bus.sections) {
+            auto range = section.absoluteRange();
+            timePoints.insert(range.first);
+            timePoints.insert(range.second);
+        }
 
     for (auto t : timePoints)
         drawTimePoint(t, painter);
@@ -100,58 +102,72 @@ void SectionWidget::drawEvents(QPainter& painter)
 
 void SectionWidget::drawSections(QPainter& painter)
 {
-    int sectionI = 0;
+    int usedY = EVENT_NAME_Y;
 
-    for (auto& section : m_project.sections()) {
-        auto range = section.absoluteRange();
-        auto startX = MARGINS + xFromNS(range.first);
-        auto endX = MARGINS + xFromNS(range.second);
-        auto y = EVENT_NAME_Y + SECTION_SPACING * sectionI + SECTION_BOX_HEIGHT * sectionI;
+    for (auto& bus : m_project.buses()) {
+        auto firstSectionY = usedY;
+        auto totalSectionHeight = (SECTION_BOX_HEIGHT + SECTION_SPACING) * bus.sections.count() + SECTION_SPACING;
+        usedY += totalSectionHeight + MARGINS;
 
-        painter.setPen(COLOR_TEXT);
+        painter.setPen(COLOR_BKG_LINE);
+        painter.setBrush(COLOR_BKG_BUS);
+        painter.drawRect(MARGINS, firstSectionY, geometry().width() - MARGINS * 2, totalSectionHeight);
 
-        switch (section.type) {
-        case Section::SectionType::WritingData:
-        case Section::SectionType::WritingGarbage:
-            painter.setBrush(QBrush(COLOR_BKG_WRITE));
-            break;
-        case Section::SectionType::WaitingInTriState:
-            painter.setBrush(QBrush());
-            break;
-        case Section::SectionType::ReadingData:
-            painter.setBrush(QBrush(COLOR_BKG_READ));
-            break;
-        }
+        painter.setPen(COLOR_BKG_LINE);
+        painter.drawText(MARGINS + 5, firstSectionY + 15, bus.name);
 
-        painter.drawRect(startX, y, endX - startX, SECTION_BOX_HEIGHT);
+        int sectionI = 0;
+        for (auto& section : bus.sections) {
+            auto range = section.absoluteRange();
+            auto startX = MARGINS + xFromNS(range.first);
+            auto endX = MARGINS + xFromNS(range.second);
+            auto y = firstSectionY + SECTION_SPACING + SECTION_SPACING * sectionI + SECTION_BOX_HEIGHT * sectionI;
 
-        if (section.type == Section::SectionType::WritingGarbage || section.type == Section::SectionType::WaitingInTriState) {
-            painter.setPen(COLOR_BKG_LINE);
-            painter.setBrush(Qt::BDiagPattern);
+            painter.setPen(COLOR_TEXT);
+
+            switch (section.type) {
+            case Section::SectionType::WritingData:
+            case Section::SectionType::WritingGarbage:
+                painter.setBrush(QBrush(COLOR_BKG_WRITE));
+                break;
+            case Section::SectionType::WaitingInTriState:
+                painter.setBrush(QBrush());
+                break;
+            case Section::SectionType::ReadingData:
+                painter.setBrush(QBrush(COLOR_BKG_READ));
+                break;
+            }
+
             painter.drawRect(startX, y, endX - startX, SECTION_BOX_HEIGHT);
+
+            if (section.type == Section::SectionType::WritingGarbage || section.type == Section::SectionType::WaitingInTriState) {
+                painter.setPen(COLOR_BKG_LINE);
+                painter.setBrush(Qt::BDiagPattern);
+                painter.drawRect(startX, y, endX - startX, SECTION_BOX_HEIGHT);
+            }
+
+            auto label = QString("");
+
+            switch (section.type) {
+            case Section::SectionType::WritingData:
+                label = QString("%1 | WR").arg(section.component.name);
+                break;
+            case Section::SectionType::WritingGarbage:
+                label = QString("%1 | WR GARBAGE").arg(section.component.name);
+                break;
+            case Section::SectionType::WaitingInTriState:
+                label = QString("%1 | tri-state").arg(section.component.name);
+                break;
+            case Section::SectionType::ReadingData:
+                label = QString("%1 | RD <").arg(section.component.name);
+                break;
+            }
+
+            painter.setPen(QColor(Qt::white));
+            painter.drawText(startX + 5, y + SECTION_BOX_HEIGHT - 5, label);
+
+            sectionI++;
         }
-
-        auto label = QString("");
-
-        switch (section.type) {
-        case Section::SectionType::WritingData:
-            label = QString("%1 | WR -> %2").arg(section.component.name).arg(section.bus);
-            break;
-        case Section::SectionType::WritingGarbage:
-            label = QString("%1 | WR GARBAGE -> %2").arg(section.component.name).arg(section.bus);
-            break;
-        case Section::SectionType::WaitingInTriState:
-            label = QString("%1 | tri-state <-> %2").arg(section.component.name).arg(section.bus);
-            break;
-        case Section::SectionType::ReadingData:
-            label = QString("%1 | RD <- %2").arg(section.component.name).arg(section.bus);
-            break;
-        }
-
-        painter.setPen(QColor(Qt::white));
-        painter.drawText(startX + 5, y + SECTION_BOX_HEIGHT - 5, label);
-
-        sectionI++;
     }
 }
 

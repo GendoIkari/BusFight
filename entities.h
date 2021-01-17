@@ -24,7 +24,6 @@ struct Section {
 
     Component component;
     SectionType type;
-    QString bus;
     Event referenceStartEvent;
     int start;
     Event referenceEndEvent;
@@ -33,21 +32,27 @@ struct Section {
     QPair<int, int> absoluteRange() const;
 };
 
+struct Bus {
+    QString name;
+    QVector<Section> sections;
+};
+
 class Project : public QObject {
     Q_OBJECT
 public:
     Project(QObject* parent = nullptr);
     const QVector<Event>& events() const;
     const QVector<Component>& components() const;
-    const QVector<Section>& sections() const;
+    const QVector<Bus>& buses() const;
     void addEvent(Event event);
     void addComponent(Component component);
-    void addSection(Section section);
+    void addSection(const QString& busName, Section section);
+    void addBus(Bus bus);
 
 private:
     QVector<Event> m_events;
     QVector<Component> m_components;
-    QVector<Section> m_sections;
+    QVector<Bus> m_buses;
 
 signals:
     void projectChanged();

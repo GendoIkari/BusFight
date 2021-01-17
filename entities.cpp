@@ -15,9 +15,9 @@ const QVector<Component>& Project::components() const
     return m_components;
 }
 
-const QVector<Section>& Project::sections() const
+const QVector<Bus>& Project::buses() const
 {
-    return m_sections;
+    return m_buses;
 }
 
 void Project::addEvent(Event event)
@@ -32,9 +32,19 @@ void Project::addComponent(Component component)
     emit projectChanged();
 }
 
-void Project::addSection(Section section)
+void Project::addSection(const QString& busName, Section section)
 {
-    m_sections.append(section);
+    for (auto& bus : m_buses) {
+        if (bus.name == busName)
+            bus.sections.append(section);
+    }
+
+    emit projectChanged();
+}
+
+void Project::addBus(Bus bus)
+{
+    m_buses.append(bus);
     emit projectChanged();
 }
 

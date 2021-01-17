@@ -16,6 +16,7 @@ private:
     const QColor COLOR_BKG_LINE = QColor("#7D92B3");
     const QColor COLOR_BKG_WRITE = QColor("#E66363");
     const QColor COLOR_BKG_READ = QColor("#8ED1A4");
+    const QColor COLOR_BKG_BUS = QColor("#E8EDD3");
     const int MARGINS = 10;
     const int HEADER_LINE_Y = MARGINS + 25;
     const int EVENT_NAME_Y = HEADER_LINE_Y + 25;
