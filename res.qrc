@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>assets/processor.svg</file>
+        <file>assets/event.svg</file>
+        <file>assets/section.svg</file>
+    </qresource>
+</RCC>
