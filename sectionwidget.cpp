@@ -1,6 +1,7 @@
 #include "sectionwidget.h"
 
 #include <QPainter>
+#include <QSet>
 
 SectionWidget::SectionWidget(Project& project, QWidget* parent)
     : QWidget(parent)
@@ -17,6 +18,7 @@ void SectionWidget::paintEvent(QPaintEvent*)
 
     drawHeader(painter);
     drawEvents(painter);
+    drawSections(painter);
 }
 
 QPair<int, int> SectionWidget::timeWindow()
@@ -29,6 +31,17 @@ QPair<int, int> SectionWidget::timeWindow()
             min = event.timeNS;
         if (event.timeNS > max)
             max = event.timeNS;
+    }
+
+    for (auto& section : m_project.sections()) {
+        int sectionStart = section.absoluteRange().first;
+        int sectionEnd = section.absoluteRange().second;
+        Q_ASSERT(sectionEnd > sectionStart);
+
+        if (sectionStart < min)
+            min = sectionStart;
+        if (sectionEnd > max)
+            max = sectionEnd;
     }
 
     return { min - m_nsMargin, max + m_nsMargin };
@@ -55,7 +68,18 @@ void SectionWidget::drawHeader(QPainter& painter)
     painter.setPen(COLOR_TEXT);
     painter.drawLine(MARGINS, HEADER_LINE_Y, width - MARGINS, HEADER_LINE_Y);
 
-    drawTimePoint(0, painter);
+    QSet<int> timePoints;
+
+    for (auto& event : m_project.events())
+        timePoints.insert(event.timeNS);
+    for (auto& section : m_project.sections()) {
+        auto range = section.absoluteRange();
+        timePoints.insert(range.first);
+        timePoints.insert(range.second);
+    }
+
+    for (auto t : timePoints)
+        drawTimePoint(t, painter);
 }
 
 void SectionWidget::drawEvents(QPainter& painter)
@@ -63,8 +87,6 @@ void SectionWidget::drawEvents(QPainter& painter)
     auto bottomY = geometry().bottom() - MARGINS;
 
     for (auto& event : m_project.events()) {
-        drawTimePoint(event.timeNS, painter);
-
         QFontMetrics fm(painter.font());
         auto textRect = fm.boundingRect(event.name);
         auto eventX = MARGINS + xFromNS(event.timeNS);
@@ -76,10 +98,67 @@ void SectionWidget::drawEvents(QPainter& painter)
     }
 }
 
+void SectionWidget::drawSections(QPainter& painter)
+{
+    int sectionI = 0;
+
+    for (auto& section : m_project.sections()) {
+        auto range = section.absoluteRange();
+        auto startX = MARGINS + xFromNS(range.first);
+        auto endX = MARGINS + xFromNS(range.second);
+        auto y = EVENT_NAME_Y + SECTION_SPACING * sectionI + SECTION_BOX_HEIGHT * sectionI;
+
+        painter.setPen(COLOR_TEXT);
+
+        switch (section.type) {
+        case Section::SectionType::WritingData:
+        case Section::SectionType::WritingGarbage:
+            painter.setBrush(QBrush(COLOR_BKG_WRITE));
+            break;
+        case Section::SectionType::WaitingInTriState:
+            painter.setBrush(QBrush());
+            break;
+        case Section::SectionType::ReadingData:
+            painter.setBrush(QBrush(COLOR_BKG_READ));
+            break;
+        }
+
+        painter.drawRect(startX, y, endX - startX, SECTION_BOX_HEIGHT);
+
+        if (section.type == Section::SectionType::WritingGarbage || section.type == Section::SectionType::WaitingInTriState) {
+            painter.setPen(COLOR_BKG_LINE);
+            painter.setBrush(Qt::BDiagPattern);
+            painter.drawRect(startX, y, endX - startX, SECTION_BOX_HEIGHT);
+        }
+
+        auto label = QString("");
+
+        switch (section.type) {
+        case Section::SectionType::WritingData:
+            label = QString("%1 | WR -> %2").arg(section.component.name).arg(section.bus);
+            break;
+        case Section::SectionType::WritingGarbage:
+            label = QString("%1 | WR GARBAGE -> %2").arg(section.component.name).arg(section.bus);
+            break;
+        case Section::SectionType::WaitingInTriState:
+            label = QString("%1 | tri-state <-> %2").arg(section.component.name).arg(section.bus);
+            break;
+        case Section::SectionType::ReadingData:
+            label = QString("%1 | RD <- %2").arg(section.component.name).arg(section.bus);
+            break;
+        }
+
+        painter.setPen(QColor(Qt::white));
+        painter.drawText(startX + 5, y + SECTION_BOX_HEIGHT - 5, label);
+
+        sectionI++;
+    }
+}
+
 void SectionWidget::drawTimePoint(int ns, QPainter& painter)
 {
     auto markerX = MARGINS + xFromNS(ns);
-    auto label = QString("%1 ns").arg(ns);
+    auto label = QString("%1").arg(ns);
 
     QFontMetrics fm(painter.font());
     auto textRect = fm.boundingRect(label);

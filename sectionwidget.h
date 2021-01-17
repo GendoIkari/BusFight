@@ -13,10 +13,14 @@ protected:
 
 private:
     const QColor COLOR_TEXT = QColor("#2A3950");
-    const QColor COLOR_BKG_LINE = QColor("#7d92b3");
+    const QColor COLOR_BKG_LINE = QColor("#7D92B3");
+    const QColor COLOR_BKG_WRITE = QColor("#E66363");
+    const QColor COLOR_BKG_READ = QColor("#8ED1A4");
     const int MARGINS = 10;
     const int HEADER_LINE_Y = MARGINS + 25;
     const int EVENT_NAME_Y = HEADER_LINE_Y + 25;
+    const int SECTION_BOX_HEIGHT = 20;
+    const int SECTION_SPACING = 5;
 
     int m_nsMargin = 50;
     Project& m_project;
@@ -25,6 +29,7 @@ private:
     int xFromNS(int ns);
     void drawHeader(QPainter& painter);
     void drawEvents(QPainter& painter);
+    void drawSections(QPainter& painter);
     void drawTimePoint(int ns, QPainter& painter);
 
 private slots:
