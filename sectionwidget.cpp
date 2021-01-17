@@ -105,6 +105,9 @@ void SectionWidget::drawSections(QPainter& painter)
     int usedY = EVENT_NAME_Y;
 
     for (auto& bus : m_project.buses()) {
+        if (bus.sections.isEmpty())
+            continue;
+
         auto firstSectionY = usedY;
         auto totalSectionHeight = (SECTION_BOX_HEIGHT + SECTION_SPACING) * bus.sections.count() + SECTION_SPACING;
         usedY += totalSectionHeight + MARGINS;
