@@ -12,9 +12,9 @@ MainWindow::~MainWindow()
 
 void MainWindow::buildUI()
 {
-    m_centralWidget = new SectionWidget(250, this);
+    m_centralWidget = new SectionWidget(m_project, this);
     setCentralWidget(m_centralWidget);
-    m_componentsDock = new ComponentsDock(this);
+    m_componentsDock = new ComponentsDock(m_project, this);
     addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, m_componentsDock);
 
     buildMenus();

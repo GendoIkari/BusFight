@@ -18,6 +18,7 @@ public:
 
     void addField(const QString& label, FieldType type);
     QString valueAsString(const QString& label) const;
+    int valueAsInt(const QString& label) const;
 
     bool isAccepted() const;
 

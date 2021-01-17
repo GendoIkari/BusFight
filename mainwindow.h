@@ -1,6 +1,7 @@
 #pragma once
 
 #include "componentsdock.h"
+#include "entities.h"
 #include "sectionwidget.h"
 #include <QMainWindow>
 
@@ -12,6 +13,7 @@ public:
     ~MainWindow();
 
 private:
+    Project m_project;
     SectionWidget* m_centralWidget = nullptr;
     ComponentsDock* m_componentsDock = nullptr;
 

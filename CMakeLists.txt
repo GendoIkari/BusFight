@@ -18,14 +18,14 @@ set(PROJECT_SOURCES
         main.cpp
         mainwindow.cpp
         mainwindow.h
-        component.cpp
-        component.h
         sectionwidget.cpp
         sectionwidget.h
         fieldsdialog.cpp
         fieldsdialog.h
         componentsdock.cpp
         componentsdock.h
+        entities.cpp
+        entities.h
 )
 
 add_executable(BusFight

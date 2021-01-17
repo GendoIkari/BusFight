@@ -37,6 +37,11 @@ QString FieldsDialog::valueAsString(const QString& label) const
     return m_fields[label].toString();
 }
 
+int FieldsDialog::valueAsInt(const QString& label) const
+{
+    return m_fields[label].toInt();
+}
+
 bool FieldsDialog::isAccepted() const
 {
     return m_accepted;

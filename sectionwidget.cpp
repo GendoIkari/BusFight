@@ -2,11 +2,12 @@
 
 #include <QPainter>
 
-SectionWidget::SectionWidget(int halfCycleNS, QWidget* parent)
+SectionWidget::SectionWidget(Project& project, QWidget* parent)
     : QWidget(parent)
-    , m_halfCycleNS(halfCycleNS)
-    , m_cycleNS(halfCycleNS * 2)
+    , m_project(project)
 {
+    connect(&project, &Project::projectChanged, this, &SectionWidget::onProjectChanged);
+    onProjectChanged();
 }
 
 void SectionWidget::paintEvent(QPaintEvent*)
@@ -15,39 +16,80 @@ void SectionWidget::paintEvent(QPaintEvent*)
     painter.setRenderHint(QPainter::Antialiasing, true);
 
     drawHeader(painter);
+    drawEvents(painter);
+}
 
-    auto usedY = 40;
+QPair<int, int> SectionWidget::timeWindow()
+{
+    int min = 0;
+    int max = 0;
+
+    for (auto& event : m_project.events()) {
+        if (event.timeNS < min)
+            min = event.timeNS;
+        if (event.timeNS > max)
+            max = event.timeNS;
+    }
+
+    return { min - m_nsMargin, max + m_nsMargin };
+}
+
+int SectionWidget::xFromNS(int ns)
+{
+    auto range = timeWindow();
+    auto timeMin = range.first;
+    auto timeMax = range.second;
+    auto timeLength = timeMax - timeMin;
+    Q_ASSERT(ns >= timeMin && ns <= timeMax);
+
+    auto width = geometry().width();
+    auto lineLength = width - MARGINS * 2;
+    auto positionPerc = (ns - timeMin) / float(timeLength);
+    return int(lineLength * positionPerc);
 }
 
 void SectionWidget::drawHeader(QPainter& painter)
 {
     auto width = geometry().width();
-    auto height = geometry().height();
-    auto headerHeight = 20;
-    auto lineY = m_drawMargins + headerHeight;
 
-    painter.setPen("#2A3950");
-    painter.setBrush(QColor("#2A3950"));
+    painter.setPen(COLOR_TEXT);
+    painter.drawLine(MARGINS, HEADER_LINE_Y, width - MARGINS, HEADER_LINE_Y);
 
-    painter.drawLine(m_drawMargins, lineY, width - m_drawMargins, lineY);
-
-    drawTimePoint(0, lineY, painter);
-    drawTimePoint(m_halfCycleNS, lineY, painter);
-    drawTimePoint(m_cycleNS, lineY, painter);
+    drawTimePoint(0, painter);
 }
 
-void SectionWidget::drawTimePoint(int ns, int y, QPainter& painter)
+void SectionWidget::drawEvents(QPainter& painter)
 {
-    auto width = geometry().width();
-    auto lineLength = width - m_drawMargins * 2;
-    auto positionPerc = (ns + m_cycleMarginNS) / float(m_cycleNS + m_cycleMarginNS * 2);
-    auto markerX = int(lineLength * positionPerc);
+    auto bottomY = geometry().bottom() - MARGINS;
+
+    for (auto& event : m_project.events()) {
+        drawTimePoint(event.timeNS, painter);
+
+        QFontMetrics fm(painter.font());
+        auto textRect = fm.boundingRect(event.name);
+        auto eventX = MARGINS + xFromNS(event.timeNS);
+
+        painter.setPen(COLOR_TEXT);
+        painter.drawText(eventX - textRect.width() / 2, EVENT_NAME_Y - 8, event.name);
+        painter.setPen(COLOR_BKG_LINE);
+        painter.drawLine(eventX, EVENT_NAME_Y, eventX, bottomY);
+    }
+}
+
+void SectionWidget::drawTimePoint(int ns, QPainter& painter)
+{
+    auto markerX = MARGINS + xFromNS(ns);
     auto label = QString("%1 ns").arg(ns);
 
     QFontMetrics fm(painter.font());
     auto textRect = fm.boundingRect(label);
 
-    painter.setPen("#2A3950");
-    painter.drawLine(m_drawMargins + markerX, y - 2, m_drawMargins + markerX, y + 2);
-    painter.drawText(m_drawMargins + markerX - textRect.width() / 2, y - 8, label);
+    painter.setPen(COLOR_TEXT);
+    painter.drawText(markerX - textRect.width() / 2, HEADER_LINE_Y - 8, label);
+    painter.drawLine(markerX, HEADER_LINE_Y - 2, markerX, HEADER_LINE_Y + 2);
+}
+
+void SectionWidget::onProjectChanged()
+{
+    update();
 }
