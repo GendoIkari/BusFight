@@ -1,5 +1,6 @@
 #include "componentsdock.h"
 #include "fieldsdialog.h"
+#include <QLabel>
 #include <QToolBar>
 #include <QVBoxLayout>
 
@@ -8,12 +9,14 @@ ComponentsDock::ComponentsDock(Project& project, QWidget* parent)
     , m_project(project)
 {
     buildUI();
+    connect(&m_project, &Project::projectChanged, this, &ComponentsDock::onProjectChanged);
+    onProjectChanged();
     onSelectionChanged(nullptr, 0);
 }
 
 void ComponentsDock::buildUI()
 {
-    setWindowTitle("Components");
+    setWindowTitle("Let's Fight!");
 
     auto subWidget = new QWidget(this);
     setWidget(subWidget);
@@ -25,6 +28,10 @@ void ComponentsDock::buildUI()
     actionAddComponent->setToolTip("Add component");
     connect(actionAddComponent, &QAction::triggered, this, &ComponentsDock::addComponent);
 
+    m_actionAddBus = toolBar->addAction(QIcon(":/assets/bus.svg"), "Add Bus");
+    m_actionAddBus->setToolTip("Add bus");
+    connect(m_actionAddBus, &QAction::triggered, this, &ComponentsDock::addBus);
+
     m_actionAddEvent = toolBar->addAction(QIcon(":/assets/event.svg"), "Add Event");
     m_actionAddEvent->setToolTip("Add event");
     connect(m_actionAddEvent, &QAction::triggered, this, &ComponentsDock::addEvent);
@@ -35,13 +42,34 @@ void ComponentsDock::buildUI()
 
     layout->addWidget(toolBar);
 
+    layout->addWidget(new QLabel("Components"));
+
     m_componentTreeWidget = new QTreeWidget(this);
     m_componentTreeWidget->setHeaderHidden(true);
     layout->addWidget(m_componentTreeWidget);
     connect(m_componentTreeWidget, &QTreeWidget::itemChanged, this, &ComponentsDock::onSelectionChanged);
 
+    layout->addWidget(new QLabel("Buses"));
+
+    m_busListWidget = new QListWidget(this);
+    layout->addWidget(m_busListWidget);
+
+    layout->addWidget(new QLabel("Events"));
+
     m_eventListWidget = new QListWidget(this);
     layout->addWidget(m_eventListWidget);
+}
+
+void ComponentsDock::addBus()
+{
+    FieldsDialog dialog("Add Bus");
+    dialog.addField("Name", FieldsDialog::FieldType::String);
+    dialog.exec();
+    if (!dialog.isAccepted())
+        return;
+
+    auto name = dialog.valueAsString("Name");
+    m_project.addBus({ .name = name });
 }
 
 void ComponentsDock::addEvent()
@@ -55,11 +83,6 @@ void ComponentsDock::addEvent()
 
     auto name = dialog.valueAsString("Name");
     auto ns = dialog.valueAsInt("Time(ns)");
-    auto item = new QListWidgetItem(m_eventListWidget, TypeEvent);
-    item->setText(QString("%1 - %2 ns").arg(name).arg(ns));
-    item->setData(DataEventName, name);
-    item->setData(DataEventNS, ns);
-    m_eventListWidget->addItem(item);
     m_project.addEvent({ .name = name, .timeNS = ns });
 }
 
@@ -72,11 +95,36 @@ void ComponentsDock::addComponent()
         return;
 
     auto name = dialog.valueAsString("Name");
-    auto item = new QTreeWidgetItem(m_componentTreeWidget, TypeComponent);
-    item->setText(0, name);
-    item->setData(0, DataComponentName, name);
-    m_componentTreeWidget->addTopLevelItem(item);
     m_project.addComponent({ .name = name });
+}
+
+void ComponentsDock::onProjectChanged()
+{
+    m_componentTreeWidget->clear();
+    m_busListWidget->clear();
+    m_eventListWidget->clear();
+
+    for (auto& bus : m_project.buses()) {
+        auto item = new QListWidgetItem(m_busListWidget, TypeBus);
+        item->setText(bus.name);
+        item->setData(DataBusName, bus.name);
+        m_busListWidget->addItem(item);
+    }
+
+    for (auto& event : m_project.events()) {
+        auto item = new QListWidgetItem(m_eventListWidget, TypeEvent);
+        item->setText(QString("%1 - %2 ns").arg(event.name).arg(event.timeNS));
+        item->setData(DataEventName, event.name);
+        item->setData(DataEventNS, event.timeNS);
+        m_eventListWidget->addItem(item);
+    }
+
+    for (auto& component : m_project.components()) {
+        auto item = new QTreeWidgetItem(m_componentTreeWidget, TypeComponent);
+        item->setText(0, component.name);
+        item->setData(0, DataComponentName, component.name);
+        m_componentTreeWidget->addTopLevelItem(item);
+    }
 }
 
 void ComponentsDock::onSelectionChanged(QTreeWidgetItem* item, int)

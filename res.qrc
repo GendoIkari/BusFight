@@ -3,5 +3,6 @@
         <file>assets/processor.svg</file>
         <file>assets/event.svg</file>
         <file>assets/section.svg</file>
+        <file>assets/bus.svg</file>
     </qresource>
 </RCC>
