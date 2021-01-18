@@ -17,6 +17,7 @@ ComponentsDock::ComponentsDock(Project& project, QWidget* parent)
 void ComponentsDock::buildUI()
 {
     setWindowTitle("Let's Fight!");
+    setFeatures(DockWidgetFloatable | DockWidgetMovable);
 
     auto subWidget = new QWidget(this);
     setWidget(subWidget);
