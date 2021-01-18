@@ -49,12 +49,14 @@ const QVector<Bus>& Project::buses() const
 
 void Project::addEvent(Event event)
 {
+    event.uuid = QUuid::createUuid();
     m_events.append(event);
     emit projectChanged();
 }
 
 void Project::addComponent(Component component)
 {
+    component.uuid = QUuid::createUuid();
     m_components.append(component);
     emit projectChanged();
 }
@@ -71,6 +73,7 @@ void Project::addSection(const QString& busName, Section section)
 
 void Project::addBus(Bus bus)
 {
+    bus.uuid = QUuid::createUuid();
     m_buses.append(bus);
     emit projectChanged();
 }
@@ -129,6 +132,7 @@ QJsonDocument Project::toJson() const
     QJsonArray buses;
     for (auto& bus : m_buses) {
         QJsonObject bObj;
+        bObj["uuid"] = bus.uuid.toString();
         bObj["name"] = bus.name;
         QJsonArray sectionsObj;
         for (auto& section : bus.sections) {
@@ -149,6 +153,7 @@ QJsonDocument Project::toJson() const
     QJsonArray components;
     for (auto& component : m_components) {
         QJsonObject compObj;
+        compObj["uuid"] = component.uuid.toString();
         compObj["name"] = component.name;
         components.append(compObj);
     }
@@ -156,6 +161,7 @@ QJsonDocument Project::toJson() const
     QJsonArray events;
     for (auto& event : m_events) {
         QJsonObject eventObj;
+        eventObj["uuid"] = event.uuid.toString();
         eventObj["name"] = event.name;
         eventObj["ns"] = event.timeNS;
         events.append(eventObj);
@@ -180,6 +186,7 @@ void Project::fromJson(QJsonDocument doc)
     auto events = root["events"].toArray();
     for (const auto& event : qAsConst(events)) {
         m_events.append(Event {
+            .uuid = event.toObject()["uuid"].toString(),
             .name = event.toObject()["name"].toString(),
             .timeNS = event.toObject()["ns"].toInt(),
         });
@@ -188,6 +195,7 @@ void Project::fromJson(QJsonDocument doc)
     auto components = root["components"].toArray();
     for (const auto& component : qAsConst(components)) {
         m_components.append(Component {
+            .uuid = component.toObject()["uuid"].toString(),
             .name = component.toObject()["name"].toString(),
         });
     }
@@ -196,6 +204,7 @@ void Project::fromJson(QJsonDocument doc)
     for (const auto& bus : qAsConst(buses)) {
         auto busObj = bus.toObject();
         auto busEntity = Bus {
+            .uuid = busObj["uuid"].toString(),
             .name = busObj["name"].toString(),
         };
         for (const auto& section : busObj["sections"].toArray()) {

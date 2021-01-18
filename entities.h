@@ -9,11 +9,13 @@
 #include <QVector>
 
 struct Event {
+    QUuid uuid;
     QString name;
     int timeNS;
 };
 
 struct Component {
+    QUuid uuid;
     QString name;
 };
 
@@ -35,6 +37,7 @@ struct Section {
 };
 
 struct Bus {
+    QUuid uuid;
     QString name;
     QVector<Section> sections;
 };
