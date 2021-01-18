@@ -5,6 +5,7 @@
 #include <QPair>
 #include <QSet>
 #include <QString>
+#include <QUuid>
 #include <QVector>
 
 struct Event {
@@ -24,6 +25,7 @@ struct Section {
         WritingGarbage,
     };
 
+    QUuid uuid;
     QString component;
     SectionType type;
     QString referenceStartEvent;
@@ -58,6 +60,7 @@ public:
     const QSet<QString> componentNames() const;
 
     void moveEvent(const QString& name, int ns);
+    void removeSection(const QUuid& uuid);
     QPair<int, int> absoluteRange(const Section& section) const;
 
     QJsonDocument toJson() const;

@@ -24,10 +24,12 @@ private:
     const int SECTION_SPACING = 5;
 
     int m_nsMargin = 50;
+    QVector<QPair<QRect, Section>> m_sectionsRects;
     Project& m_project;
 
     QPair<int, int> timeWindow();
     int xFromNS(int ns);
+    void buildUI();
     void drawHeader(QPainter& painter);
     void drawEvents(QPainter& painter);
     void drawSections(QPainter& painter);
@@ -35,4 +37,5 @@ private:
 
 private slots:
     void onProjectChanged();
+    void onContextMenuRequested(QPointF point);
 };

@@ -61,11 +61,11 @@ void Project::addComponent(Component component)
 
 void Project::addSection(const QString& busName, Section section)
 {
+    section.uuid = QUuid::createUuid();
     for (auto& bus : m_buses) {
         if (bus.name == busName)
             bus.sections.append(section);
     }
-
     emit projectChanged();
 }
 
@@ -107,6 +107,15 @@ void Project::moveEvent(const QString& name, int ns)
     emit projectChanged();
 }
 
+void Project::removeSection(const QUuid& uuid)
+{
+    for (auto& bus : m_buses)
+        bus.sections.erase(std::remove_if(bus.sections.begin(),
+                               bus.sections.end(), [=](Section s) { return s.uuid == uuid; }),
+            bus.sections.end());
+    emit projectChanged();
+}
+
 QPair<int, int> Project::absoluteRange(const Section& section) const
 {
     int sectionStart = event(section.referenceStartEvent).timeNS + section.start;
@@ -130,6 +139,7 @@ QJsonDocument Project::toJson() const
             sObj["startOffset"] = section.start;
             sObj["endRef"] = section.referenceEndEvent;
             sObj["endOffset"] = section.end;
+            sObj["uuid"] = section.uuid.toString();
             sectionsObj.append(sObj);
         }
         bObj["sections"] = sectionsObj;
@@ -191,6 +201,7 @@ void Project::fromJson(QJsonDocument doc)
         for (const auto& section : busObj["sections"].toArray()) {
             auto sectionObj = section.toObject();
             auto sectionEntity = Section {
+                .uuid = sectionObj["uuid"].toString(),
                 .component = sectionObj["component"].toString(),
                 .type = Section::SectionType(sectionObj["type"].toInt()),
                 .referenceStartEvent = sectionObj["startRef"].toString(),

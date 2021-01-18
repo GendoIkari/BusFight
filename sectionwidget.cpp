@@ -1,5 +1,6 @@
 #include "sectionwidget.h"
 
+#include <QMenu>
 #include <QPainter>
 #include <QSet>
 
@@ -7,6 +8,7 @@ SectionWidget::SectionWidget(Project& project, QWidget* parent)
     : QWidget(parent)
     , m_project(project)
 {
+    buildUI();
     connect(&project, &Project::projectChanged, this, &SectionWidget::onProjectChanged);
     onProjectChanged();
 }
@@ -60,6 +62,12 @@ int SectionWidget::xFromNS(int ns)
     auto lineLength = width - MARGINS * 2;
     auto positionPerc = (ns - timeMin) / float(timeLength);
     return int(lineLength * positionPerc);
+}
+
+void SectionWidget::buildUI()
+{
+    setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+    connect(this, &SectionWidget::customContextMenuRequested, this, &SectionWidget::onContextMenuRequested);
 }
 
 void SectionWidget::drawHeader(QPainter& painter)
@@ -142,6 +150,7 @@ void SectionWidget::drawSections(QPainter& painter)
             }
 
             painter.drawRect(startX, y, endX - startX, SECTION_BOX_HEIGHT);
+            m_sectionsRects.append({ { startX, y, endX - startX, SECTION_BOX_HEIGHT }, section });
 
             if (section.type == Section::SectionType::WritingGarbage || section.type == Section::SectionType::WaitingInTriState) {
                 painter.setPen(COLOR_BKG_LINE);
@@ -189,5 +198,29 @@ void SectionWidget::drawTimePoint(int ns, QPainter& painter)
 
 void SectionWidget::onProjectChanged()
 {
+    m_sectionsRects.clear();
     update();
+}
+
+void SectionWidget::onContextMenuRequested(QPointF point)
+{
+    QRect r;
+    Section s;
+    bool onSection = false;
+    for (auto& rect : m_sectionsRects)
+        if (rect.first.contains(point.toPoint())) {
+            r = rect.first;
+            s = rect.second;
+            onSection = true;
+        }
+
+    if (!onSection)
+        return;
+
+    QMenu eventMenu;
+    eventMenu.move(mapToGlobal(point.toPoint()));
+    eventMenu.addAction("Remove", this, [=] {
+        m_project.removeSection(s.uuid);
+    });
+    eventMenu.exec();
 }
