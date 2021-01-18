@@ -1,5 +1,6 @@
 #pragma once
 
+#include "entities.h"
 #include <QDialog>
 #include <QHash>
 #include <QLineEdit>
@@ -16,6 +17,12 @@ public:
     };
 
     explicit FieldsDialog(const QString& title, QWidget* parent = nullptr);
+
+    static void addEventDialog(Project& project);
+    static void addComponentDialog(Project& project);
+    static void addBusDialog(Project& project);
+    static void addSectionDialog(Project& project);
+    static void editEventDialog(Project& project, const QString& eventName);
 
     void addField(const QString& label, FieldType type);
     void addComboBox(const QString& label, QVector<QString> choices);

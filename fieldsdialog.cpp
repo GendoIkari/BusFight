@@ -11,6 +11,100 @@ FieldsDialog::FieldsDialog(const QString& title, QWidget* parent)
     buildUI();
 }
 
+void FieldsDialog::addEventDialog(Project& project)
+{
+    FieldsDialog dialog("Add Event");
+    dialog.addField("Name", FieldsDialog::FieldType::String);
+    dialog.addField("Time(ns)", FieldsDialog::FieldType::Integer);
+    dialog.exec();
+    if (!dialog.isAccepted())
+        return;
+
+    auto name = dialog.valueAsString("Name");
+    auto ns = dialog.valueAsInt("Time(ns)");
+    project.addEvent({ .name = name, .timeNS = ns });
+}
+
+void FieldsDialog::addComponentDialog(Project& project)
+{
+    FieldsDialog dialog("Add Component");
+    dialog.addField("Name", FieldsDialog::FieldType::String);
+    dialog.exec();
+    if (!dialog.isAccepted())
+        return;
+
+    auto name = dialog.valueAsString("Name");
+    project.addComponent({ .name = name });
+}
+
+void FieldsDialog::addBusDialog(Project& project)
+{
+    FieldsDialog dialog("Add Bus");
+    dialog.addField("Name", FieldsDialog::FieldType::String);
+    dialog.exec();
+    if (!dialog.isAccepted())
+        return;
+
+    auto name = dialog.valueAsString("Name");
+    project.addBus({ .name = name });
+}
+
+void FieldsDialog::addSectionDialog(Project& project)
+{
+    FieldsDialog dialog("Add Section");
+    dialog.addComboBox("Component", project.componentNames().values().toVector());
+    dialog.addComboBox("Type", {
+                                   "Waiting in Tri-State",
+                                   "Reading from Bus",
+                                   "Writing to Bus",
+                                   "Writing Garbage to Bus",
+                               });
+    dialog.addComboBox("Bus", project.busNames().values().toVector());
+    dialog.addComboBox("Start Reference", project.eventNames().values().toVector());
+    dialog.addField("Start Offset", FieldsDialog::FieldType::Integer);
+    dialog.addComboBox("End Reference", project.eventNames().values().toVector());
+    dialog.addField("End Offset", FieldsDialog::FieldType::Integer);
+    dialog.exec();
+    if (!dialog.isAccepted())
+        return;
+
+    auto componentName = dialog.valueAsString("Component");
+    auto busName = dialog.valueAsString("Bus");
+    auto typeStr = dialog.valueAsString("Type");
+    auto startEventName = dialog.valueAsString("Start Reference");
+    auto startOffset = dialog.valueAsInt("Start Offset");
+    auto endEventName = dialog.valueAsString("End Reference");
+    auto endOffset = dialog.valueAsInt("End Offset");
+    auto type = Section::SectionType::WritingGarbage;
+    if (typeStr == "Waiting in Tri-State")
+        type = Section::SectionType::WaitingInTriState;
+    if (typeStr == "Reading from Bus")
+        type = Section::SectionType::ReadingData;
+    if (typeStr == "Writing to Bus")
+        type = Section::SectionType::WritingData;
+
+    project.addSection(busName, {
+                                    .component = componentName,
+                                    .type = type,
+                                    .referenceStartEvent = startEventName,
+                                    .start = startOffset,
+                                    .referenceEndEvent = endEventName,
+                                    .end = endOffset,
+                                });
+}
+
+void FieldsDialog::editEventDialog(Project& project, const QString& eventName)
+{
+    FieldsDialog dialog("Edit Event");
+    dialog.addField("Time", FieldsDialog::FieldType::Integer);
+    dialog.exec();
+    if (!dialog.isAccepted())
+        return;
+
+    auto newTime = dialog.valueAsInt("Time");
+    project.moveEvent(eventName, newTime);
+}
+
 void FieldsDialog::addField(const QString& label, FieldsDialog::FieldType type)
 {
     Q_ASSERT(type != FieldType::ComboBox);
