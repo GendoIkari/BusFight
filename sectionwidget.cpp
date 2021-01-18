@@ -162,7 +162,7 @@ void SectionWidget::drawSections(QPainter& painter)
                 label = QString("%1 | tri-state").arg(section.component.name);
                 break;
             case Section::SectionType::ReadingData:
-                label = QString("%1 | RD <").arg(section.component.name);
+                label = QString("%1 | RD").arg(section.component.name);
                 break;
             }
 

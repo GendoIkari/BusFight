@@ -11,7 +11,6 @@ ComponentsDock::ComponentsDock(Project& project, QWidget* parent)
     buildUI();
     connect(&m_project, &Project::projectChanged, this, &ComponentsDock::onProjectChanged);
     onProjectChanged();
-    onSelectionChanged(nullptr, 0);
 }
 
 void ComponentsDock::buildUI()
@@ -38,7 +37,7 @@ void ComponentsDock::buildUI()
 
     m_actionAddSection = toolBar->addAction(QIcon(":/assets/section.svg"), "Add Section");
     m_actionAddSection->setToolTip("Add section");
-    connect(m_actionAddSection, &QAction::triggered, this, &ComponentsDock::addComponent);
+    connect(m_actionAddSection, &QAction::triggered, this, &ComponentsDock::addSection);
 
     layout->addWidget(toolBar);
 
@@ -47,7 +46,6 @@ void ComponentsDock::buildUI()
     m_componentTreeWidget = new QTreeWidget(this);
     m_componentTreeWidget->setHeaderHidden(true);
     layout->addWidget(m_componentTreeWidget);
-    connect(m_componentTreeWidget, &QTreeWidget::itemChanged, this, &ComponentsDock::onSelectionChanged);
 
     layout->addWidget(new QLabel("Buses"));
 
@@ -98,6 +96,50 @@ void ComponentsDock::addComponent()
     m_project.addComponent({ .name = name });
 }
 
+void ComponentsDock::addSection()
+{
+    FieldsDialog dialog("Add Section");
+    dialog.addComboBox("Component", m_project.componentNames().values().toVector());
+    dialog.addComboBox("Type", {
+                                   "Waiting in Tri-State",
+                                   "Reading from Bus",
+                                   "Writing to Bus",
+                                   "Writing Garbage to Bus",
+                               });
+    dialog.addComboBox("Bus", m_project.busNames().values().toVector());
+    dialog.addComboBox("Start Reference", m_project.eventNames().values().toVector());
+    dialog.addField("Start Offset", FieldsDialog::FieldType::Integer);
+    dialog.addComboBox("End Reference", m_project.eventNames().values().toVector());
+    dialog.addField("End Offset", FieldsDialog::FieldType::Integer);
+    dialog.exec();
+    if (!dialog.isAccepted())
+        return;
+
+    auto componentName = dialog.valueAsString("Component");
+    auto busName = dialog.valueAsString("Bus");
+    auto typeStr = dialog.valueAsString("Type");
+    auto startEventName = dialog.valueAsString("Start Reference");
+    auto startOffset = dialog.valueAsInt("Start Offset");
+    auto endEventName = dialog.valueAsString("End Reference");
+    auto endOffset = dialog.valueAsInt("End Offset");
+    auto type = Section::SectionType::WritingGarbage;
+    if (typeStr == "Waiting in Tri-State")
+        type = Section::SectionType::WaitingInTriState;
+    if (typeStr == "Reading from Bus")
+        type = Section::SectionType::ReadingData;
+    if (typeStr == "Writing to Bus")
+        type = Section::SectionType::WritingData;
+
+    m_project.addSection(busName, {
+                                      .component = m_project.component(componentName),
+                                      .type = type,
+                                      .referenceStartEvent = m_project.event(startEventName),
+                                      .start = startOffset,
+                                      .referenceEndEvent = m_project.event(endEventName),
+                                      .end = endOffset,
+                                  });
+}
+
 void ComponentsDock::onProjectChanged()
 {
     m_componentTreeWidget->clear();
@@ -125,16 +167,6 @@ void ComponentsDock::onProjectChanged()
         item->setData(0, DataComponentName, component.name);
         m_componentTreeWidget->addTopLevelItem(item);
     }
-}
 
-void ComponentsDock::onSelectionChanged(QTreeWidgetItem* item, int)
-{
-    if (!item) {
-        m_actionAddSection->setEnabled(false);
-        return;
-    }
-
-    if (item->type() == TypeComponent) {
-        m_actionAddSection->setEnabled(true);
-    }
+    m_actionAddSection->setEnabled(m_project.events().count() > 0 && m_project.components().count() > 0);
 }

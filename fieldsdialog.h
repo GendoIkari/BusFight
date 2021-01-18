@@ -12,11 +12,14 @@ public:
     enum class FieldType {
         String,
         Integer,
+        ComboBox,
     };
 
     explicit FieldsDialog(const QString& title, QWidget* parent = nullptr);
 
     void addField(const QString& label, FieldType type);
+    void addComboBox(const QString& label, QVector<QString> choices);
+
     QString valueAsString(const QString& label) const;
     int valueAsInt(const QString& label) const;
 

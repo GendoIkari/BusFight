@@ -5,6 +5,30 @@ Project::Project(QObject* parent)
 {
 }
 
+const Event& Project::event(const QString& name) const
+{
+    for (auto& event : m_events)
+        if (event.name == name)
+            return event;
+    Q_ASSERT(false);
+}
+
+const Component& Project::component(const QString& name) const
+{
+    for (auto& component : m_components)
+        if (component.name == name)
+            return component;
+    Q_ASSERT(false);
+}
+
+const Bus& Project::bus(const QString& name) const
+{
+    for (auto& bus : m_buses)
+        if (bus.name == name)
+            return bus;
+    Q_ASSERT(false);
+}
+
 const QVector<Event>& Project::events() const
 {
     return m_events;
@@ -46,6 +70,30 @@ void Project::addBus(Bus bus)
 {
     m_buses.append(bus);
     emit projectChanged();
+}
+
+const QSet<QString> Project::busNames() const
+{
+    QSet<QString> names;
+    for (auto& bus : m_buses)
+        names.insert(bus.name);
+    return names;
+}
+
+const QSet<QString> Project::eventNames() const
+{
+    QSet<QString> names;
+    for (auto& event : m_events)
+        names.insert(event.name);
+    return names;
+}
+
+const QSet<QString> Project::componentNames() const
+{
+    QSet<QString> names;
+    for (auto& component : m_components)
+        names.insert(component.name);
+    return names;
 }
 
 QPair<int, int> Section::absoluteRange() const

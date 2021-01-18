@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QPair>
+#include <QSet>
 #include <QString>
 #include <QVector>
 
@@ -41,6 +42,9 @@ class Project : public QObject {
     Q_OBJECT
 public:
     Project(QObject* parent = nullptr);
+    const Event& event(const QString& name) const;
+    const Component& component(const QString& name) const;
+    const Bus& bus(const QString& name) const;
     const QVector<Event>& events() const;
     const QVector<Component>& components() const;
     const QVector<Bus>& buses() const;
@@ -48,6 +52,10 @@ public:
     void addComponent(Component component);
     void addSection(const QString& busName, Section section);
     void addBus(Bus bus);
+
+    const QSet<QString> busNames() const;
+    const QSet<QString> eventNames() const;
+    const QSet<QString> componentNames() const;
 
 private:
     QVector<Event> m_events;

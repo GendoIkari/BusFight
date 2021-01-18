@@ -1,4 +1,5 @@
 #include "fieldsdialog.h"
+#include <QComboBox>
 #include <QHBoxLayout>
 #include <QIntValidator>
 #include <QLabel>
@@ -12,6 +13,8 @@ FieldsDialog::FieldsDialog(const QString& title, QWidget* parent)
 
 void FieldsDialog::addField(const QString& label, FieldsDialog::FieldType type)
 {
+    Q_ASSERT(type != FieldType::ComboBox);
+
     auto rowLayout = new QHBoxLayout();
     rowLayout->addWidget(new QLabel(label));
     auto lineEdit = new QLineEdit(this);
@@ -28,6 +31,32 @@ void FieldsDialog::addField(const QString& label, FieldsDialog::FieldType type)
     connect(lineEdit, &QLineEdit::textChanged, this, [=] {
         m_fields[label] = lineEdit->text();
         m_fieldsValidate[label] = !lineEdit->text().isEmpty() && lineEdit->hasAcceptableInput();
+        checkParameters();
+    });
+}
+
+void FieldsDialog::addComboBox(const QString& label, QVector<QString> choices)
+{
+    Q_ASSERT(choices.count() > 0);
+
+    auto rowLayout = new QHBoxLayout();
+    rowLayout->addWidget(new QLabel(label));
+    auto combo = new QComboBox(this);
+    rowLayout->addWidget(combo);
+    m_fieldsLayout->addLayout(rowLayout);
+    for (auto& choice : choices)
+        combo->addItem(choice);
+
+    if (m_fieldsValidate.isEmpty())
+        combo->setFocus();
+
+    m_fieldsValidate[label] = true;
+    m_fields[label] = choices.first();
+    checkParameters();
+
+    connect(combo, &QComboBox::currentTextChanged, this, [=] {
+        m_fields[label] = combo->currentText();
+        m_fieldsValidate[label] = combo->currentIndex() != -1;
         checkParameters();
     });
 }

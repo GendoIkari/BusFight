@@ -39,6 +39,6 @@ private slots:
     void addBus();
     void addEvent();
     void addComponent();
+    void addSection();
     void onProjectChanged();
-    void onSelectionChanged(QTreeWidgetItem* item, int column);
 };
