@@ -233,10 +233,10 @@ void SectionWidget::onContextMenuRequested(QPointF point)
     QMenu sectionMenu;
     sectionMenu.move(mapToGlobal(point.toPoint()));
     auto addMenu = sectionMenu.addMenu("Add");
-    addMenu->addAction("Component", this, [&] { FieldsDialog::addComponentDialog(m_project); });
-    addMenu->addAction("Bus", this, [&] { FieldsDialog::addBusDialog(m_project); });
-    addMenu->addAction("Event", this, [&] { FieldsDialog::addEventDialog(m_project); });
-    addMenu->addAction("Section", this, [&] { FieldsDialog::addSectionDialog(m_project); });
+    addMenu->addAction(QIcon(":/assets/processor.svg"), "Component", this, [&] { FieldsDialog::addComponentDialog(m_project); });
+    addMenu->addAction(QIcon(":/assets/bus.svg"), "Bus", this, [&] { FieldsDialog::addBusDialog(m_project); });
+    addMenu->addAction(QIcon(":/assets/event.svg"), "Event", this, [&] { FieldsDialog::addEventDialog(m_project); });
+    addMenu->addAction(QIcon(":/assets/section.svg"), "Section", this, [&] { FieldsDialog::addSectionDialog(m_project); });
     auto editAction = sectionMenu.addAction("Edit", this, [&] {
         FieldsDialog::editSectionDialog(m_project, s.uuid);
     });
