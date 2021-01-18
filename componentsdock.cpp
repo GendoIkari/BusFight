@@ -110,14 +110,18 @@ void ComponentsDock::onProjectChanged()
 
 void ComponentsDock::onEventMenuRequested(const QPointF& point)
 {
-    if (!m_eventListWidget->currentItem())
-        return;
-
     QPoint p = m_eventListWidget->mapToGlobal(point.toPoint());
     QMenu eventMenu;
     eventMenu.move(p);
-    eventMenu.addAction("Edit", this, [&] {
+    eventMenu.addAction("Add", this, &ComponentsDock::addEvent);
+    auto editAction = eventMenu.addAction("Edit", this, [&] {
         FieldsDialog::editEventDialog(m_project, m_eventListWidget->currentItem()->data(DataEventName).toString());
     });
+    editAction->setEnabled(m_eventListWidget->currentItem() != nullptr);
+    eventMenu.addSeparator();
+    auto removeAction = eventMenu.addAction("Remove", this, [&] {
+        m_project.removeEvent(m_eventListWidget->currentItem()->data(DataEventName).toString());
+    });
+    removeAction->setEnabled(m_eventListWidget->currentItem() != nullptr);
     eventMenu.exec();
 }

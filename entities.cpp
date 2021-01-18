@@ -110,6 +110,24 @@ void Project::moveEvent(const QString& name, int ns)
     emit projectChanged();
 }
 
+void Project::removeEvent(const QString& name)
+{
+    QSet<QUuid> sectionsToBeRemoved;
+    for (auto& bus : m_buses)
+        for (auto& section : bus.sections) {
+            if (section.referenceStartEvent == name || section.referenceEndEvent == name)
+                sectionsToBeRemoved.insert(section.uuid);
+        }
+
+    for (auto& uuid : sectionsToBeRemoved)
+        removeSection(uuid);
+    m_events.erase(std::remove_if(m_events.begin(), m_events.end(), [=](Event e) {
+        return e.name == name;
+    }),
+        m_events.end());
+    emit projectChanged();
+}
+
 void Project::removeSection(const QUuid& uuid)
 {
     for (auto& bus : m_buses)

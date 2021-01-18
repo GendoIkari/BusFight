@@ -63,6 +63,7 @@ public:
     const QSet<QString> componentNames() const;
 
     void moveEvent(const QString& name, int ns);
+    void removeEvent(const QString& name);
     void removeSection(const QUuid& uuid);
     QPair<int, int> absoluteRange(const Section& section) const;
 
