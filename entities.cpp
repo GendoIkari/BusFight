@@ -255,6 +255,10 @@ QJsonDocument Project::toJson() const
 
 void Project::fromJson(QJsonDocument doc)
 {
+    m_buses.clear();
+    m_components.clear();
+    m_events.clear();
+
     auto root = doc.object();
     if (root["version"].toString() != SERIALIZE_VERSION)
         return;

@@ -14,14 +14,13 @@ public:
 
 private:
     Project m_project;
+    QString m_projectFileName;
     SectionWidget* m_centralWidget = nullptr;
     ComponentsDock* m_componentsDock = nullptr;
 
     void buildUI();
     void buildMenus();
     void buildDocks();
+    void saveProject();
     void loadProject();
-
-private slots:
-    void onProjectChanged();
 };
