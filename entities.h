@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QJsonDocument>
 #include <QObject>
 #include <QPair>
 #include <QSet>
@@ -17,7 +18,7 @@ struct Component {
 
 struct Section {
     enum class SectionType {
-        WaitingInTriState,
+        WaitingInTriState = 0,
         ReadingData,
         WritingData,
         WritingGarbage,
@@ -41,6 +42,8 @@ struct Bus {
 class Project : public QObject {
     Q_OBJECT
 public:
+    const QString SERIALIZE_VERSION = "0.0.1";
+
     Project(QObject* parent = nullptr);
     const Event& event(const QString& name) const;
     const Component& component(const QString& name) const;
@@ -52,10 +55,11 @@ public:
     void addComponent(Component component);
     void addSection(const QString& busName, Section section);
     void addBus(Bus bus);
-
     const QSet<QString> busNames() const;
     const QSet<QString> eventNames() const;
     const QSet<QString> componentNames() const;
+    QJsonDocument toJson() const;
+    void fromJson(QJsonDocument doc);
 
 private:
     QVector<Event> m_events;

@@ -168,5 +168,5 @@ void ComponentsDock::onProjectChanged()
         m_componentTreeWidget->addTopLevelItem(item);
     }
 
-    m_actionAddSection->setEnabled(m_project.events().count() > 0 && m_project.components().count() > 0);
+    m_actionAddSection->setEnabled(m_project.events().count() > 0 && m_project.components().count() > 0 && m_project.buses().count() > 0);
 }

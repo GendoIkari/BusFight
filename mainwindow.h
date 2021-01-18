@@ -20,4 +20,8 @@ private:
     void buildUI();
     void buildMenus();
     void buildDocks();
+    void loadProject();
+
+private slots:
+    void onProjectChanged();
 };
