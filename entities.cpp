@@ -78,11 +78,29 @@ void Project::addBus(Bus bus)
     emit projectChanged();
 }
 
-void Project::moveEvent(const QUuid& uuid, int ns)
+void Project::editEvent(const QUuid& uuid, const QString& name, int ns)
 {
-    for (auto& event : m_events)
-        if (event.uuid == uuid)
-            event.timeNS = ns;
+    for (auto& e : m_events)
+        if (e.uuid == uuid) {
+            e.timeNS = ns;
+            e.name = name;
+        }
+    emit projectChanged();
+}
+
+void Project::editBus(const QUuid& uuid, const QString& name)
+{
+    for (auto& bus : m_buses)
+        if (bus.uuid == uuid)
+            bus.name = name;
+    emit projectChanged();
+}
+
+void Project::editComponent(const QUuid& uuid, const QString& name)
+{
+    for (auto& component : m_components)
+        if (component.uuid == uuid)
+            component.name = name;
     emit projectChanged();
 }
 
@@ -97,10 +115,20 @@ void Project::removeEvent(const QUuid& uuid)
 
     for (auto& uuid : sectionsToBeRemoved)
         removeSection(uuid);
+
     m_events.erase(std::remove_if(m_events.begin(), m_events.end(), [=](Event e) {
         return e.uuid == uuid;
     }),
         m_events.end());
+    emit projectChanged();
+}
+
+void Project::removeBus(const QUuid& uuid)
+{
+    m_buses.erase(std::remove_if(m_buses.begin(), m_buses.end(), [=](Bus b) {
+        return b.uuid == uuid;
+    }),
+        m_buses.end());
     emit projectChanged();
 }
 
@@ -112,6 +140,25 @@ void Project::removeSection(const QUuid& uuid)
                                    return s.uuid == uuid;
                                }),
             bus.sections.end());
+    emit projectChanged();
+}
+
+void Project::removeComponent(const QUuid& uuid)
+{
+    QSet<QUuid> sectionsToBeRemoved;
+    for (auto& bus : m_buses)
+        for (auto& section : bus.sections) {
+            if (section.component == uuid)
+                sectionsToBeRemoved.insert(section.uuid);
+        }
+    for (auto& uuid : sectionsToBeRemoved)
+        removeSection(uuid);
+
+    m_components.erase(std::remove_if(m_components.begin(), m_components.end(), [=](Component c) {
+        return c.uuid == uuid;
+    }),
+        m_components.end());
+
     emit projectChanged();
 }
 

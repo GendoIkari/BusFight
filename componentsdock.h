@@ -18,10 +18,9 @@ private:
     };
 
     enum DataItemType {
-        DataEventName = Qt::UserRole,
-        DataEventNS,
-        DataComponentName,
-        DataBusName,
+        DataEventUuid = Qt::UserRole,
+        DataComponentUuid,
+        DataBusUuid,
     };
 
     void buildUI();
@@ -40,5 +39,7 @@ private slots:
     void addComponent();
     void addSection();
     void onProjectChanged();
+    void onBusMenuRequested(const QPointF& point);
     void onEventMenuRequested(const QPointF& point);
+    void onComponentMenuRequested(const QPointF& point);
 };

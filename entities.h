@@ -58,10 +58,13 @@ public:
     void addComponent(Component component);
     void addSection(const QUuid& busUuid, Section section);
     void addBus(Bus bus);
-
-    void moveEvent(const QUuid& uuid, int ns);
+    void editEvent(const QUuid& uuid, const QString& name, int ns);
+    void editBus(const QUuid& uuid, const QString& name);
+    void editComponent(const QUuid& uuid, const QString& name);
     void removeEvent(const QUuid& uuid);
+    void removeBus(const QUuid& uuid);
     void removeSection(const QUuid& uuid);
+    void removeComponent(const QUuid& uuid);
     QPair<int, int> absoluteRange(const Section& section) const;
 
     QJsonDocument toJson() const;

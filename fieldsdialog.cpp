@@ -15,8 +15,8 @@ FieldsDialog::FieldsDialog(const QString& title, QWidget* parent)
 void FieldsDialog::addEventDialog(Project& project)
 {
     FieldsDialog dialog("Add Event");
-    dialog.addField("Name", FieldsDialog::FieldType::String);
-    dialog.addField("Time(ns)", FieldsDialog::FieldType::Integer);
+    dialog.addField("Name", FieldType::String);
+    dialog.addField("Time(ns)", FieldType::Integer);
     dialog.exec();
     if (!dialog.isAccepted())
         return;
@@ -29,7 +29,7 @@ void FieldsDialog::addEventDialog(Project& project)
 void FieldsDialog::addComponentDialog(Project& project)
 {
     FieldsDialog dialog("Add Component");
-    dialog.addField("Name", FieldsDialog::FieldType::String);
+    dialog.addField("Name", FieldType::String);
     dialog.exec();
     if (!dialog.isAccepted())
         return;
@@ -41,7 +41,7 @@ void FieldsDialog::addComponentDialog(Project& project)
 void FieldsDialog::addBusDialog(Project& project)
 {
     FieldsDialog dialog("Add Bus");
-    dialog.addField("Name", FieldsDialog::FieldType::String);
+    dialog.addField("Name", FieldType::String);
     dialog.exec();
     if (!dialog.isAccepted())
         return;
@@ -76,9 +76,9 @@ void FieldsDialog::addSectionDialog(Project& project)
         eventItems.append({ e.name, e.uuid });
 
     dialog.addComboBox("Start Reference", eventItems);
-    dialog.addField("Start Offset", FieldsDialog::FieldType::Integer);
+    dialog.addField("Start Offset", FieldType::Integer);
     dialog.addComboBox("End Reference", eventItems);
-    dialog.addField("End Offset", FieldsDialog::FieldType::Integer);
+    dialog.addField("End Offset", FieldType::Integer);
     dialog.exec();
     if (!dialog.isAccepted())
         return;
@@ -111,19 +111,48 @@ void FieldsDialog::addSectionDialog(Project& project)
     project.addSection(busName, s);
 }
 
-void FieldsDialog::editEventDialog(Project& project, const QString& eventName)
+void FieldsDialog::editEventDialog(Project& project, const QUuid& eventUuid)
 {
+    auto event = project.event(eventUuid);
     FieldsDialog dialog("Edit Event");
-    dialog.addField("Time", FieldsDialog::FieldType::Integer);
+    dialog.addField("Name", FieldType::String, event.name);
+    dialog.addField("Time", FieldType::Integer, event.timeNS);
     dialog.exec();
     if (!dialog.isAccepted())
         return;
 
+    auto newName = dialog.valueAsString("Name");
     auto newTime = dialog.valueAsInt("Time");
-    project.moveEvent(eventName, newTime);
+    project.editEvent(eventUuid, newName, newTime);
 }
 
-void FieldsDialog::addField(const QString& label, FieldsDialog::FieldType type)
+void FieldsDialog::editBusDialog(Project& project, const QUuid& busUuid)
+{
+    auto bus = project.bus(busUuid);
+    FieldsDialog dialog("Edit Bus");
+    dialog.addField("Name", FieldType::String, bus.name);
+    dialog.exec();
+    if (!dialog.isAccepted())
+        return;
+
+    auto newName = dialog.valueAsString("Name");
+    project.editBus(busUuid, newName);
+}
+
+void FieldsDialog::editComponentDialog(Project& project, const QUuid& componentUuid)
+{
+    auto component = project.component(componentUuid);
+    FieldsDialog dialog("Edit Component");
+    dialog.addField("Name", FieldType::String, component.name);
+    dialog.exec();
+    if (!dialog.isAccepted())
+        return;
+
+    auto newName = dialog.valueAsString("Name");
+    project.editComponent(componentUuid, newName);
+}
+
+void FieldsDialog::addField(const QString& label, FieldsDialog::FieldType type, QVariant defaultValue)
 {
     Q_ASSERT(type != FieldType::ComboBox);
 
@@ -140,6 +169,14 @@ void FieldsDialog::addField(const QString& label, FieldsDialog::FieldType type)
 
     m_fieldsValidate[label] = false;
 
+    if (defaultValue.isValid()) {
+        m_fieldsValidate[label] = true;
+        m_fields[label] = defaultValue.toString();
+        lineEdit->setText(defaultValue.toString());
+    }
+
+    checkParameters();
+
     connect(lineEdit, &QLineEdit::textChanged, this, [=] {
         m_fields[label] = lineEdit->text();
         m_fieldsValidate[label] = !lineEdit->text().isEmpty() && lineEdit->hasAcceptableInput();
@@ -147,7 +184,7 @@ void FieldsDialog::addField(const QString& label, FieldsDialog::FieldType type)
     });
 }
 
-void FieldsDialog::addComboBox(const QString& label, QVector<QPair<QString, QVariant>> choices)
+void FieldsDialog::addComboBox(const QString& label, QVector<QPair<QString, QVariant>> choices, QVariant defaultValue)
 {
     Q_ASSERT(choices.count() > 0);
 
@@ -163,7 +200,16 @@ void FieldsDialog::addComboBox(const QString& label, QVector<QPair<QString, QVar
         combo->setFocus();
 
     m_fieldsValidate[label] = true;
-    m_fields[label] = choices.first().second;
+    int defaultIndex = -1;
+    if (defaultValue.isValid())
+        for (auto& choice : choices) {
+            defaultIndex++;
+            if (choice.second == defaultValue)
+                combo->setCurrentIndex(defaultIndex);
+        }
+    else
+        m_fields[label] = choices.first().second;
+
     checkParameters();
 
     connect(combo, &QComboBox::currentTextChanged, this, [=] {
