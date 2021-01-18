@@ -8,26 +8,26 @@ Project::Project(QObject* parent)
 {
 }
 
-const Event& Project::event(const QString& name) const
+const Event& Project::event(const QUuid& uuid) const
 {
     for (auto& event : m_events)
-        if (event.name == name)
+        if (event.uuid == uuid)
             return event;
     Q_ASSERT(false);
 }
 
-const Component& Project::component(const QString& name) const
+const Component& Project::component(const QUuid& uuid) const
 {
     for (auto& component : m_components)
-        if (component.name == name)
+        if (component.uuid == uuid)
             return component;
     Q_ASSERT(false);
 }
 
-const Bus& Project::bus(const QString& name) const
+const Bus& Project::bus(const QUuid& uuid) const
 {
     for (auto& bus : m_buses)
-        if (bus.name == name)
+        if (bus.uuid == uuid)
             return bus;
     Q_ASSERT(false);
 }
@@ -61,11 +61,11 @@ void Project::addComponent(Component component)
     emit projectChanged();
 }
 
-void Project::addSection(const QString& busName, Section section)
+void Project::addSection(const QUuid& busUuid, Section section)
 {
     section.uuid = QUuid::createUuid();
     for (auto& bus : m_buses) {
-        if (bus.name == busName)
+        if (bus.uuid == busUuid)
             bus.sections.append(section);
     }
     emit projectChanged();
@@ -78,51 +78,27 @@ void Project::addBus(Bus bus)
     emit projectChanged();
 }
 
-const QSet<QString> Project::busNames() const
-{
-    QSet<QString> names;
-    for (auto& bus : m_buses)
-        names.insert(bus.name);
-    return names;
-}
-
-const QSet<QString> Project::eventNames() const
-{
-    QSet<QString> names;
-    for (auto& event : m_events)
-        names.insert(event.name);
-    return names;
-}
-
-const QSet<QString> Project::componentNames() const
-{
-    QSet<QString> names;
-    for (auto& component : m_components)
-        names.insert(component.name);
-    return names;
-}
-
-void Project::moveEvent(const QString& name, int ns)
+void Project::moveEvent(const QUuid& uuid, int ns)
 {
     for (auto& event : m_events)
-        if (event.name == name)
+        if (event.uuid == uuid)
             event.timeNS = ns;
     emit projectChanged();
 }
 
-void Project::removeEvent(const QString& name)
+void Project::removeEvent(const QUuid& uuid)
 {
     QSet<QUuid> sectionsToBeRemoved;
     for (auto& bus : m_buses)
         for (auto& section : bus.sections) {
-            if (section.referenceStartEvent == name || section.referenceEndEvent == name)
+            if (section.referenceStartEvent == uuid || section.referenceEndEvent == uuid)
                 sectionsToBeRemoved.insert(section.uuid);
         }
 
     for (auto& uuid : sectionsToBeRemoved)
         removeSection(uuid);
     m_events.erase(std::remove_if(m_events.begin(), m_events.end(), [=](Event e) {
-        return e.name == name;
+        return e.uuid == uuid;
     }),
         m_events.end());
     emit projectChanged();
@@ -132,7 +108,9 @@ void Project::removeSection(const QUuid& uuid)
 {
     for (auto& bus : m_buses)
         bus.sections.erase(std::remove_if(bus.sections.begin(),
-                               bus.sections.end(), [=](Section s) { return s.uuid == uuid; }),
+                               bus.sections.end(), [=](Section s) {
+                                   return s.uuid == uuid;
+                               }),
             bus.sections.end());
     emit projectChanged();
 }
@@ -155,11 +133,11 @@ QJsonDocument Project::toJson() const
         QJsonArray sectionsObj;
         for (auto& section : bus.sections) {
             QJsonObject sObj;
-            sObj["component"] = section.component;
+            sObj["component"] = section.component.toString();
             sObj["type"] = int(section.type);
-            sObj["startRef"] = section.referenceStartEvent;
+            sObj["startRef"] = section.referenceStartEvent.toString();
             sObj["startOffset"] = section.start;
-            sObj["endRef"] = section.referenceEndEvent;
+            sObj["endRef"] = section.referenceEndEvent.toString();
             sObj["endOffset"] = section.end;
             sObj["uuid"] = section.uuid.toString();
             sectionsObj.append(sObj);

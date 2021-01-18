@@ -28,11 +28,11 @@ struct Section {
     };
 
     QUuid uuid;
-    QString component;
+    QUuid component;
     SectionType type;
-    QString referenceStartEvent;
+    QUuid referenceStartEvent;
     int start;
-    QString referenceEndEvent;
+    QUuid referenceEndEvent;
     int end;
 };
 
@@ -45,25 +45,22 @@ struct Bus {
 class Project : public QObject {
     Q_OBJECT
 public:
-    const QString SERIALIZE_VERSION = "0.0.1";
+    const QString SERIALIZE_VERSION = "0.0.2";
 
     Project(QObject* parent = nullptr);
-    const Event& event(const QString& name) const;
-    const Component& component(const QString& name) const;
-    const Bus& bus(const QString& name) const;
+    const Event& event(const QUuid& uuid) const;
+    const Component& component(const QUuid& uuid) const;
+    const Bus& bus(const QUuid& uuid) const;
     const QVector<Event>& events() const;
     const QVector<Component>& components() const;
     const QVector<Bus>& buses() const;
     void addEvent(Event event);
     void addComponent(Component component);
-    void addSection(const QString& busName, Section section);
+    void addSection(const QUuid& busUuid, Section section);
     void addBus(Bus bus);
-    const QSet<QString> busNames() const;
-    const QSet<QString> eventNames() const;
-    const QSet<QString> componentNames() const;
 
-    void moveEvent(const QString& name, int ns);
-    void removeEvent(const QString& name);
+    void moveEvent(const QUuid& uuid, int ns);
+    void removeEvent(const QUuid& uuid);
     void removeSection(const QUuid& uuid);
     QPair<int, int> absoluteRange(const Section& section) const;
 

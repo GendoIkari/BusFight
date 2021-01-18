@@ -116,7 +116,7 @@ void SectionWidget::drawSections(QPainter& painter)
         if (bus.sections.isEmpty())
             continue;
 
-        QHash<QString, QVector<Section>> sectionsByComponent;
+        QHash<QUuid, QVector<Section>> sectionsByComponent;
         for (auto& section : bus.sections)
             sectionsByComponent[section.component].append(section);
 
@@ -132,11 +132,12 @@ void SectionWidget::drawSections(QPainter& painter)
         painter.drawText(MARGINS + 5, firstSectionY + 15, bus.name);
 
         int sectionI = 0;
-        for (auto& component : sectionsByComponent.keys()) {
+        for (auto& componentUuid : sectionsByComponent.keys()) {
+            auto component = m_project.component(componentUuid);
             auto y = firstSectionY + SECTION_SPACING + SECTION_SPACING * sectionI + SECTION_BOX_HEIGHT * sectionI;
             int minimumX = 9999;
 
-            for (auto& section : sectionsByComponent[component]) {
+            for (auto& section : sectionsByComponent[componentUuid]) {
                 auto range = m_project.absoluteRange(section);
                 auto startX = MARGINS + xFromNS(range.first);
                 auto endX = MARGINS + xFromNS(range.second);
@@ -188,9 +189,9 @@ void SectionWidget::drawSections(QPainter& painter)
             }
 
             QFontMetrics fm(painter.font());
-            auto textRect = fm.boundingRect(component);
+            auto textRect = fm.boundingRect(component.name);
             painter.setPen(COLOR_BKG_LINE);
-            painter.drawText(minimumX - textRect.width() - 5, y + SECTION_BOX_HEIGHT - 5, component);
+            painter.drawText(minimumX - textRect.width() - 5, y + SECTION_BOX_HEIGHT - 5, component.name);
 
             sectionI++;
         }

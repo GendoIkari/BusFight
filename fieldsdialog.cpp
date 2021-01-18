@@ -53,17 +53,31 @@ void FieldsDialog::addBusDialog(Project& project)
 void FieldsDialog::addSectionDialog(Project& project)
 {
     FieldsDialog dialog("Add Section");
-    dialog.addComboBox("Component", project.componentNames().values().toVector());
+
+    QVector<QPair<QString, QVariant>> componentsItems;
+    for (auto& c : project.components())
+        componentsItems.append({ c.name, c.uuid });
+    dialog.addComboBox("Component", componentsItems);
+
     dialog.addComboBox("Type", {
-                                   "Waiting in Tri-State",
-                                   "Reading from Bus",
-                                   "Writing to Bus",
-                                   "Writing Garbage to Bus",
+                                   { "Waiting in Tri-State", int(Section::SectionType::WaitingInTriState) },
+                                   { "Reading from Bus", int(Section::SectionType::ReadingData) },
+                                   { "Writing to Bus", int(Section::SectionType::WritingData) },
+                                   { "Writing Garbage to Bus", int(Section::SectionType::WritingGarbage) },
                                });
-    dialog.addComboBox("Bus", project.busNames().values().toVector());
-    dialog.addComboBox("Start Reference", project.eventNames().values().toVector());
+
+    QVector<QPair<QString, QVariant>> busItems;
+    for (auto& b : project.buses())
+        busItems.append({ b.name, b.uuid });
+    dialog.addComboBox("Bus", busItems);
+
+    QVector<QPair<QString, QVariant>> eventItems;
+    for (auto& e : project.events())
+        eventItems.append({ e.name, e.uuid });
+
+    dialog.addComboBox("Start Reference", eventItems);
     dialog.addField("Start Offset", FieldsDialog::FieldType::Integer);
-    dialog.addComboBox("End Reference", project.eventNames().values().toVector());
+    dialog.addComboBox("End Reference", eventItems);
     dialog.addField("End Offset", FieldsDialog::FieldType::Integer);
     dialog.exec();
     if (!dialog.isAccepted())
@@ -71,18 +85,11 @@ void FieldsDialog::addSectionDialog(Project& project)
 
     auto componentName = dialog.valueAsString("Component");
     auto busName = dialog.valueAsString("Bus");
-    auto typeStr = dialog.valueAsString("Type");
     auto startEventName = dialog.valueAsString("Start Reference");
     auto startOffset = dialog.valueAsInt("Start Offset");
     auto endEventName = dialog.valueAsString("End Reference");
     auto endOffset = dialog.valueAsInt("End Offset");
-    auto type = Section::SectionType::WritingGarbage;
-    if (typeStr == "Waiting in Tri-State")
-        type = Section::SectionType::WaitingInTriState;
-    if (typeStr == "Reading from Bus")
-        type = Section::SectionType::ReadingData;
-    if (typeStr == "Writing to Bus")
-        type = Section::SectionType::WritingData;
+    auto type = Section::SectionType(dialog.valueAsInt("Type"));
 
     Section s {
         .component = componentName,
@@ -140,7 +147,7 @@ void FieldsDialog::addField(const QString& label, FieldsDialog::FieldType type)
     });
 }
 
-void FieldsDialog::addComboBox(const QString& label, QVector<QString> choices)
+void FieldsDialog::addComboBox(const QString& label, QVector<QPair<QString, QVariant>> choices)
 {
     Q_ASSERT(choices.count() > 0);
 
@@ -150,17 +157,17 @@ void FieldsDialog::addComboBox(const QString& label, QVector<QString> choices)
     rowLayout->addWidget(combo);
     m_fieldsLayout->addLayout(rowLayout);
     for (auto& choice : choices)
-        combo->addItem(choice);
+        combo->addItem(choice.first, choice.second);
 
     if (m_fieldsValidate.isEmpty())
         combo->setFocus();
 
     m_fieldsValidate[label] = true;
-    m_fields[label] = choices.first();
+    m_fields[label] = choices.first().second;
     checkParameters();
 
     connect(combo, &QComboBox::currentTextChanged, this, [=] {
-        m_fields[label] = combo->currentText();
+        m_fields[label] = combo->currentData();
         m_fieldsValidate[label] = combo->currentIndex() != -1;
         checkParameters();
     });

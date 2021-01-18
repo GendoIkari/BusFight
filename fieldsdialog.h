@@ -25,7 +25,7 @@ public:
     static void editEventDialog(Project& project, const QString& eventName);
 
     void addField(const QString& label, FieldType type);
-    void addComboBox(const QString& label, QVector<QString> choices);
+    void addComboBox(const QString& label, QVector<QPair<QString, QVariant>> choices);
 
     QString valueAsString(const QString& label) const;
     int valueAsInt(const QString& label) const;
