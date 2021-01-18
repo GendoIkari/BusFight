@@ -51,6 +51,8 @@ public:
     const Event& event(const QUuid& uuid) const;
     const Component& component(const QUuid& uuid) const;
     const Bus& bus(const QUuid& uuid) const;
+    const Bus& bus(const Section& section) const;
+    const Section& section(const QUuid& uuid) const;
     const QVector<Event>& events() const;
     const QVector<Component>& components() const;
     const QVector<Bus>& buses() const;
@@ -61,6 +63,7 @@ public:
     void editEvent(const QUuid& uuid, const QString& name, int ns);
     void editBus(const QUuid& uuid, const QString& name);
     void editComponent(const QUuid& uuid, const QString& name);
+    void editSection(const QUuid& uuid, const QUuid& component, Section::SectionType type, const QUuid& startEvent, int start, const QUuid& endEvent, int end);
     void removeEvent(const QUuid& uuid);
     void removeBus(const QUuid& uuid);
     void removeSection(const QUuid& uuid);

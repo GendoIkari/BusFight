@@ -1,5 +1,6 @@
 #include "sectionwidget.h"
 
+#include "fieldsdialog.h"
 #include <QMenu>
 #include <QPainter>
 #include <QSet>
@@ -229,13 +230,16 @@ void SectionWidget::onContextMenuRequested(QPointF point)
             onSection = true;
         }
 
-    if (!onSection)
-        return;
-
-    QMenu eventMenu;
-    eventMenu.move(mapToGlobal(point.toPoint()));
-    eventMenu.addAction("Remove", this, [=] {
+    QMenu sectionMenu;
+    sectionMenu.move(mapToGlobal(point.toPoint()));
+    auto editAction = sectionMenu.addAction("Edit", this, [&] {
+        FieldsDialog::editSectionDialog(m_project, s.uuid);
+    });
+    editAction->setEnabled(onSection);
+    sectionMenu.addSeparator();
+    auto removeAction = sectionMenu.addAction("Remove", this, [=] {
         m_project.removeSection(s.uuid);
     });
-    eventMenu.exec();
+    removeAction->setEnabled(onSection);
+    sectionMenu.exec();
 }

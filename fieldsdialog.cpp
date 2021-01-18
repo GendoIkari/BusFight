@@ -83,20 +83,20 @@ void FieldsDialog::addSectionDialog(Project& project)
     if (!dialog.isAccepted())
         return;
 
-    auto componentName = dialog.valueAsString("Component");
-    auto busName = dialog.valueAsString("Bus");
-    auto startEventName = dialog.valueAsString("Start Reference");
+    QUuid compUuid = dialog.valueAsString("Component");
+    QUuid busUuid = dialog.valueAsString("Bus");
+    QUuid startEventUuid = dialog.valueAsString("Start Reference");
     auto startOffset = dialog.valueAsInt("Start Offset");
-    auto endEventName = dialog.valueAsString("End Reference");
+    QUuid endEventUuid = dialog.valueAsString("End Reference");
     auto endOffset = dialog.valueAsInt("End Offset");
     auto type = Section::SectionType(dialog.valueAsInt("Type"));
 
     Section s {
-        .component = componentName,
+        .component = compUuid,
         .type = type,
-        .referenceStartEvent = startEventName,
+        .referenceStartEvent = startEventUuid,
         .start = startOffset,
-        .referenceEndEvent = endEventName,
+        .referenceEndEvent = endEventUuid,
         .end = endOffset,
     };
     auto range = project.absoluteRange(s);
@@ -108,13 +108,14 @@ void FieldsDialog::addSectionDialog(Project& project)
         return;
     }
 
-    project.addSection(busName, s);
+    project.addSection(busUuid, s);
 }
 
 void FieldsDialog::editEventDialog(Project& project, const QUuid& eventUuid)
 {
     auto event = project.event(eventUuid);
     FieldsDialog dialog("Edit Event");
+    dialog.m_okButton->setText("Edit");
     dialog.addField("Name", FieldType::String, event.name);
     dialog.addField("Time", FieldType::Integer, event.timeNS);
     dialog.exec();
@@ -130,6 +131,7 @@ void FieldsDialog::editBusDialog(Project& project, const QUuid& busUuid)
 {
     auto bus = project.bus(busUuid);
     FieldsDialog dialog("Edit Bus");
+    dialog.m_okButton->setText("Edit");
     dialog.addField("Name", FieldType::String, bus.name);
     dialog.exec();
     if (!dialog.isAccepted())
@@ -143,6 +145,7 @@ void FieldsDialog::editComponentDialog(Project& project, const QUuid& componentU
 {
     auto component = project.component(componentUuid);
     FieldsDialog dialog("Edit Component");
+    dialog.m_okButton->setText("Edit");
     dialog.addField("Name", FieldType::String, component.name);
     dialog.exec();
     if (!dialog.isAccepted())
@@ -150,6 +153,66 @@ void FieldsDialog::editComponentDialog(Project& project, const QUuid& componentU
 
     auto newName = dialog.valueAsString("Name");
     project.editComponent(componentUuid, newName);
+}
+
+void FieldsDialog::editSectionDialog(Project& project, const QUuid& sectionUuid)
+{
+    auto section = project.section(sectionUuid);
+    auto bus = project.bus(section);
+
+    FieldsDialog dialog("Edit Section");
+    dialog.m_okButton->setText("Edit");
+
+    QVector<QPair<QString, QVariant>> componentsItems;
+    for (auto& c : project.components())
+        componentsItems.append({ c.name, c.uuid });
+    dialog.addComboBox("Component", componentsItems, section.component);
+
+    dialog.addComboBox("Type", {
+                                   { "Waiting in Tri-State", int(Section::SectionType::WaitingInTriState) },
+                                   { "Reading from Bus", int(Section::SectionType::ReadingData) },
+                                   { "Writing to Bus", int(Section::SectionType::WritingData) },
+                                   { "Writing Garbage to Bus", int(Section::SectionType::WritingGarbage) },
+                               },
+        int(section.type));
+
+    QVector<QPair<QString, QVariant>> eventItems;
+    for (auto& e : project.events())
+        eventItems.append({ e.name, e.uuid });
+
+    dialog.addComboBox("Start Reference", eventItems, section.referenceStartEvent.toString());
+    dialog.addField("Start Offset", FieldType::Integer, section.start);
+    dialog.addComboBox("End Reference", eventItems, section.referenceEndEvent.toString());
+    dialog.addField("End Offset", FieldType::Integer, section.end);
+    dialog.exec();
+    if (!dialog.isAccepted())
+        return;
+
+    QUuid compUuid = dialog.valueAsString("Component");
+    QUuid startEventUuid = dialog.valueAsString("Start Reference");
+    auto startOffset = dialog.valueAsInt("Start Offset");
+    QUuid endEventUuid = dialog.valueAsString("End Reference");
+    auto endOffset = dialog.valueAsInt("End Offset");
+    auto type = Section::SectionType(dialog.valueAsInt("Type"));
+
+    Section s {
+        .component = compUuid,
+        .type = type,
+        .referenceStartEvent = startEventUuid,
+        .start = startOffset,
+        .referenceEndEvent = endEventUuid,
+        .end = endOffset,
+    };
+    auto range = project.absoluteRange(s);
+    if (range.first >= range.second) {
+        QMessageBox message;
+        message.setWindowTitle("Error");
+        message.setText("Cannot create a section with start > end");
+        message.exec();
+        return;
+    }
+
+    project.editSection(sectionUuid, compUuid, type, startEventUuid, startOffset, endEventUuid, endOffset);
 }
 
 void FieldsDialog::addField(const QString& label, FieldsDialog::FieldType type, QVariant defaultValue)
@@ -171,7 +234,7 @@ void FieldsDialog::addField(const QString& label, FieldsDialog::FieldType type, 
 
     if (defaultValue.isValid()) {
         m_fieldsValidate[label] = true;
-        m_fields[label] = defaultValue.toString();
+        m_fields[label] = defaultValue;
         lineEdit->setText(defaultValue.toString());
     }
 
@@ -201,13 +264,14 @@ void FieldsDialog::addComboBox(const QString& label, QVector<QPair<QString, QVar
 
     m_fieldsValidate[label] = true;
     int defaultIndex = -1;
-    if (defaultValue.isValid())
+    if (defaultValue.isValid()) {
+        m_fields[label] = defaultValue;
         for (auto& choice : choices) {
             defaultIndex++;
             if (choice.second == defaultValue)
                 combo->setCurrentIndex(defaultIndex);
         }
-    else
+    } else
         m_fields[label] = choices.first().second;
 
     checkParameters();

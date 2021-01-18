@@ -32,6 +32,24 @@ const Bus& Project::bus(const QUuid& uuid) const
     Q_ASSERT(false);
 }
 
+const Bus& Project::bus(const Section& section) const
+{
+    for (auto& bus : m_buses)
+        for (auto& s : bus.sections)
+            if (s.uuid == section.uuid)
+                return bus;
+    Q_ASSERT(false);
+}
+
+const Section& Project::section(const QUuid& uuid) const
+{
+    for (auto& bus : m_buses)
+        for (auto& section : bus.sections)
+            if (section.uuid == uuid)
+                return section;
+    Q_ASSERT(false);
+}
+
 const QVector<Event>& Project::events() const
 {
     return m_events;
@@ -101,6 +119,21 @@ void Project::editComponent(const QUuid& uuid, const QString& name)
     for (auto& component : m_components)
         if (component.uuid == uuid)
             component.name = name;
+    emit projectChanged();
+}
+
+void Project::editSection(const QUuid& uuid, const QUuid& component, Section::SectionType type, const QUuid& startEvent, int start, const QUuid& endEvent, int end)
+{
+    for (auto& bus : m_buses)
+        for (auto& s : bus.sections)
+            if (s.uuid == uuid) {
+                s.component = component;
+                s.type = type;
+                s.referenceStartEvent = startEvent;
+                s.start = start;
+                s.referenceEndEvent = endEvent;
+                s.end = end;
+            }
     emit projectChanged();
 }
 
