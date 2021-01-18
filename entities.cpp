@@ -99,6 +99,21 @@ const QSet<QString> Project::componentNames() const
     return names;
 }
 
+void Project::moveEvent(const QString& name, int ns)
+{
+    for (auto& event : m_events)
+        if (event.name == name)
+            event.timeNS = ns;
+    emit projectChanged();
+}
+
+QPair<int, int> Project::absoluteRange(const Section& section) const
+{
+    int sectionStart = event(section.referenceStartEvent).timeNS + section.start;
+    int sectionEnd = event(section.referenceEndEvent).timeNS + section.end;
+    return { sectionStart, sectionEnd };
+}
+
 QJsonDocument Project::toJson() const
 {
 
@@ -109,11 +124,11 @@ QJsonDocument Project::toJson() const
         QJsonArray sectionsObj;
         for (auto& section : bus.sections) {
             QJsonObject sObj;
-            sObj["component"] = section.component.name;
+            sObj["component"] = section.component;
             sObj["type"] = int(section.type);
-            sObj["startRef"] = section.referenceStartEvent.name;
+            sObj["startRef"] = section.referenceStartEvent;
             sObj["startOffset"] = section.start;
-            sObj["endRef"] = section.referenceEndEvent.name;
+            sObj["endRef"] = section.referenceEndEvent;
             sObj["endOffset"] = section.end;
             sectionsObj.append(sObj);
         }
@@ -176,11 +191,11 @@ void Project::fromJson(QJsonDocument doc)
         for (const auto& section : busObj["sections"].toArray()) {
             auto sectionObj = section.toObject();
             auto sectionEntity = Section {
-                .component = component(sectionObj["component"].toString()),
+                .component = sectionObj["component"].toString(),
                 .type = Section::SectionType(sectionObj["type"].toInt()),
-                .referenceStartEvent = event(sectionObj["startRef"].toString()),
+                .referenceStartEvent = sectionObj["startRef"].toString(),
                 .start = sectionObj["startOffset"].toInt(),
-                .referenceEndEvent = event(sectionObj["endRef"].toString()),
+                .referenceEndEvent = sectionObj["endRef"].toString(),
                 .end = sectionObj["endOffset"].toInt(),
             };
             busEntity.sections.append(sectionEntity);
@@ -189,11 +204,4 @@ void Project::fromJson(QJsonDocument doc)
     }
 
     emit projectChanged();
-}
-
-QPair<int, int> Section::absoluteRange() const
-{
-    int sectionStart = referenceStartEvent.timeNS + start;
-    int sectionEnd = referenceEndEvent.timeNS + end;
-    return { sectionStart, sectionEnd };
 }

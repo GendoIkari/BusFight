@@ -35,8 +35,8 @@ QPair<int, int> SectionWidget::timeWindow()
 
     for (auto& bus : m_project.buses())
         for (auto& section : bus.sections) {
-            int sectionStart = section.absoluteRange().first;
-            int sectionEnd = section.absoluteRange().second;
+            int sectionStart = m_project.absoluteRange(section).first;
+            int sectionEnd = m_project.absoluteRange(section).second;
             Q_ASSERT(sectionEnd > sectionStart);
 
             if (sectionStart < min)
@@ -75,7 +75,7 @@ void SectionWidget::drawHeader(QPainter& painter)
         timePoints.insert(event.timeNS);
     for (auto& bus : m_project.buses())
         for (auto& section : bus.sections) {
-            auto range = section.absoluteRange();
+            auto range = m_project.absoluteRange(section);
             timePoints.insert(range.first);
             timePoints.insert(range.second);
         }
@@ -121,7 +121,7 @@ void SectionWidget::drawSections(QPainter& painter)
 
         int sectionI = 0;
         for (auto& section : bus.sections) {
-            auto range = section.absoluteRange();
+            auto range = m_project.absoluteRange(section);
             auto startX = MARGINS + xFromNS(range.first);
             auto endX = MARGINS + xFromNS(range.second);
             auto y = firstSectionY + SECTION_SPACING + SECTION_SPACING * sectionI + SECTION_BOX_HEIGHT * sectionI;
@@ -153,16 +153,16 @@ void SectionWidget::drawSections(QPainter& painter)
 
             switch (section.type) {
             case Section::SectionType::WritingData:
-                label = QString("%1 | WR").arg(section.component.name);
+                label = QString("%1 | WR").arg(section.component);
                 break;
             case Section::SectionType::WritingGarbage:
-                label = QString("%1 | WR GARBAGE").arg(section.component.name);
+                label = QString("%1 | WR GARBAGE").arg(section.component);
                 break;
             case Section::SectionType::WaitingInTriState:
-                label = QString("%1 | tri-state").arg(section.component.name);
+                label = QString("%1 | tri-state").arg(section.component);
                 break;
             case Section::SectionType::ReadingData:
-                label = QString("%1 | RD").arg(section.component.name);
+                label = QString("%1 | RD").arg(section.component);
                 break;
             }
 

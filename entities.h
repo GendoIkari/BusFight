@@ -24,14 +24,12 @@ struct Section {
         WritingGarbage,
     };
 
-    Component component;
+    QString component;
     SectionType type;
-    Event referenceStartEvent;
+    QString referenceStartEvent;
     int start;
-    Event referenceEndEvent;
+    QString referenceEndEvent;
     int end;
-
-    QPair<int, int> absoluteRange() const;
 };
 
 struct Bus {
@@ -58,6 +56,10 @@ public:
     const QSet<QString> busNames() const;
     const QSet<QString> eventNames() const;
     const QSet<QString> componentNames() const;
+
+    void moveEvent(const QString& name, int ns);
+    QPair<int, int> absoluteRange(const Section& section) const;
+
     QJsonDocument toJson() const;
     void fromJson(QJsonDocument doc);
 

@@ -1,6 +1,7 @@
 #include "componentsdock.h"
 #include "fieldsdialog.h"
 #include <QLabel>
+#include <QMenu>
 #include <QToolBar>
 #include <QVBoxLayout>
 
@@ -42,19 +43,17 @@ void ComponentsDock::buildUI()
     layout->addWidget(toolBar);
 
     layout->addWidget(new QLabel("Components"));
-
-    m_componentTreeWidget = new QTreeWidget(this);
-    m_componentTreeWidget->setHeaderHidden(true);
-    layout->addWidget(m_componentTreeWidget);
+    m_componentListWidget = new QListWidget(this);
+    layout->addWidget(m_componentListWidget);
 
     layout->addWidget(new QLabel("Buses"));
-
     m_busListWidget = new QListWidget(this);
     layout->addWidget(m_busListWidget);
 
     layout->addWidget(new QLabel("Events"));
-
     m_eventListWidget = new QListWidget(this);
+    m_eventListWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_eventListWidget, &QListWidget::customContextMenuRequested, this, &ComponentsDock::onEventMenuRequested);
     layout->addWidget(m_eventListWidget);
 }
 
@@ -131,18 +130,18 @@ void ComponentsDock::addSection()
         type = Section::SectionType::WritingData;
 
     m_project.addSection(busName, {
-                                      .component = m_project.component(componentName),
+                                      .component = componentName,
                                       .type = type,
-                                      .referenceStartEvent = m_project.event(startEventName),
+                                      .referenceStartEvent = startEventName,
                                       .start = startOffset,
-                                      .referenceEndEvent = m_project.event(endEventName),
+                                      .referenceEndEvent = endEventName,
                                       .end = endOffset,
                                   });
 }
 
 void ComponentsDock::onProjectChanged()
 {
-    m_componentTreeWidget->clear();
+    m_componentListWidget->clear();
     m_busListWidget->clear();
     m_eventListWidget->clear();
 
@@ -162,11 +161,33 @@ void ComponentsDock::onProjectChanged()
     }
 
     for (auto& component : m_project.components()) {
-        auto item = new QTreeWidgetItem(m_componentTreeWidget, TypeComponent);
-        item->setText(0, component.name);
-        item->setData(0, DataComponentName, component.name);
-        m_componentTreeWidget->addTopLevelItem(item);
+        auto item = new QListWidgetItem(m_componentListWidget, TypeComponent);
+        item->setText(component.name);
+        item->setData(DataComponentName, component.name);
+        m_componentListWidget->addItem(item);
     }
 
     m_actionAddSection->setEnabled(m_project.events().count() > 0 && m_project.components().count() > 0 && m_project.buses().count() > 0);
+}
+
+void ComponentsDock::onEventMenuRequested(const QPointF& point)
+{
+    if (!m_eventListWidget->currentItem())
+        return;
+
+    QPoint p = m_eventListWidget->mapToGlobal(point.toPoint());
+    QMenu eventMenu;
+    eventMenu.move(p);
+    eventMenu.addAction("Edit", this, [=] {
+        FieldsDialog dialog("Edit Event");
+        dialog.addField("Time", FieldsDialog::FieldType::Integer);
+        dialog.exec();
+        if (!dialog.isAccepted())
+            return;
+
+        auto newTime = dialog.valueAsInt("Time");
+        auto eventName = m_eventListWidget->currentItem()->data(DataEventName).toString();
+        m_project.moveEvent(eventName, newTime);
+    });
+    eventMenu.exec();
 }
