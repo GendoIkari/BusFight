@@ -3,6 +3,7 @@
 #include <QHBoxLayout>
 #include <QIntValidator>
 #include <QLabel>
+#include <QMessageBox>
 
 FieldsDialog::FieldsDialog(const QString& title, QWidget* parent)
     : QDialog(parent)
@@ -83,14 +84,24 @@ void FieldsDialog::addSectionDialog(Project& project)
     if (typeStr == "Writing to Bus")
         type = Section::SectionType::WritingData;
 
-    project.addSection(busName, {
-                                    .component = componentName,
-                                    .type = type,
-                                    .referenceStartEvent = startEventName,
-                                    .start = startOffset,
-                                    .referenceEndEvent = endEventName,
-                                    .end = endOffset,
-                                });
+    Section s {
+        .component = componentName,
+        .type = type,
+        .referenceStartEvent = startEventName,
+        .start = startOffset,
+        .referenceEndEvent = endEventName,
+        .end = endOffset,
+    };
+    auto range = project.absoluteRange(s);
+    if (range.first >= range.second) {
+        QMessageBox message;
+        message.setWindowTitle("Error");
+        message.setText("Cannot create a section with start > end");
+        message.exec();
+        return;
+    }
+
+    project.addSection(busName, s);
 }
 
 void FieldsDialog::editEventDialog(Project& project, const QString& eventName)
