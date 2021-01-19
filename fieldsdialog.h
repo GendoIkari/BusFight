@@ -21,11 +21,9 @@ public:
     static void addEventDialog(Project& project);
     static void addComponentDialog(Project& project);
     static void addBusDialog(Project& project);
-    static void addSectionDialog(Project& project);
     static void editEventDialog(Project& project, const QUuid& eventUuid);
     static void editBusDialog(Project& project, const QUuid& busUuid);
     static void editComponentDialog(Project& project, const QUuid& componentUuid);
-    static void editSectionDialog(Project& project, const QUuid& sectionUuid);
 
     void addField(const QString& label, FieldType type, QVariant defaultValue = QVariant());
     void addComboBox(const QString& label, QVector<QPair<QString, QVariant>> choices, QVariant defaultValue = QVariant());

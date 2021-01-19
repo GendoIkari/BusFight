@@ -1,6 +1,7 @@
 #include "sectionwidget.h"
 
 #include "fieldsdialog.h"
+#include "sectiondialog.h"
 #include <QMenu>
 #include <QPainter>
 #include <QSet>
@@ -130,6 +131,7 @@ void SectionWidget::drawSections(QPainter& painter)
         painter.drawRect(MARGINS, firstSectionY, geometry().width() - MARGINS * 2, totalSectionHeight);
 
         painter.setPen(COLOR_BKG_LINE);
+        painter.setFont(QFont());
         painter.drawText(MARGINS + 5, firstSectionY + 15, bus.name);
 
         int sectionI = 0;
@@ -144,58 +146,115 @@ void SectionWidget::drawSections(QPainter& painter)
                 auto endX = MARGINS + xFromNS(range.second);
                 minimumX = std::min(startX, minimumX);
 
-                switch (section.type) {
-                case Section::SectionType::WritingData:
-                case Section::SectionType::WritingGarbage:
-                    painter.setBrush(QBrush(COLOR_BKG_WRITE));
-                    break;
-                case Section::SectionType::WaitingInTriState:
-                    painter.setBrush(QBrush());
-                    break;
-                case Section::SectionType::ReadingData:
-                    painter.setBrush(QBrush(COLOR_BKG_READ));
-                    break;
-                }
-
-                painter.setPen(COLOR_TEXT);
-                painter.drawRect(startX, y, endX - startX, SECTION_BOX_HEIGHT);
-                m_sectionsRects.append({ { startX, y, endX - startX, SECTION_BOX_HEIGHT }, section });
-
-                if (section.type == Section::SectionType::WritingGarbage || section.type == Section::SectionType::WaitingInTriState) {
-                    painter.setPen(COLOR_BKG_LINE);
-                    painter.setBrush(Qt::BDiagPattern);
-                    painter.drawRect(startX, y, endX - startX, SECTION_BOX_HEIGHT);
-                }
-
-                auto label = QString("");
-                painter.setPen(QColor(Qt::white));
-
-                switch (section.type) {
-                case Section::SectionType::WritingData:
-                    label = QString("WR");
-                    break;
-                case Section::SectionType::WritingGarbage:
-                    label = QString("WR GARBAGE");
-                    break;
-                case Section::SectionType::WaitingInTriState:
-                    painter.setPen(COLOR_TEXT);
-                    label = QString("HZ");
-                    break;
-                case Section::SectionType::ReadingData:
-                    label = QString("RD");
-                    break;
-                }
-
-                painter.drawText(startX + 5, y + SECTION_BOX_HEIGHT - 5, label);
+                QRect sectionRect { startX, y, endX - startX, SECTION_BOX_HEIGHT };
+                m_sectionsRects.append({ sectionRect, section });
+                drawSection(painter, section, sectionRect);
             }
 
+            painter.setFont(QFont());
             QFontMetrics fm(painter.font());
             auto textRect = fm.boundingRect(component.name);
             painter.setPen(COLOR_BKG_LINE);
-            painter.drawText(minimumX - textRect.width() - 5, y + SECTION_BOX_HEIGHT - 5, component.name);
+            painter.drawText(minimumX - textRect.width() - 8, y + SECTION_BOX_HEIGHT - 5, component.name);
 
             sectionI++;
         }
+    }
+}
+
+void SectionWidget::drawSection(QPainter& painter, const Section& section, QRect rect)
+{
+    painter.setPen(COLOR_TEXT);
+
+    switch (section.type) {
+    case Section::SectionType::WritingGarbage:
+        painter.setBrush(QBrush(COLOR_BKG_GARBAGE));
+        break;
+    case Section::SectionType::WritingData:
+        painter.setBrush(QBrush(COLOR_BKG_WRITE));
+        break;
+    case Section::SectionType::ReadingData:
+        painter.setBrush(QBrush(COLOR_BKG_READ));
+        break;
+    default:
+        painter.setBrush(QBrush());
+        break;
+    }
+
+    switch (section.type) {
+    case Section::SectionType::SignalHigh:
+        painter.drawLine(rect.left(), rect.top(), rect.right(), rect.top());
+        break;
+    case Section::SectionType::SignalLow:
+        painter.drawLine(rect.left(), rect.bottom(), rect.right(), rect.bottom());
+        break;
+    case Section::SectionType::SignalTriState:
+        painter.drawLine(rect.left(), rect.top() + rect.height() / 2, rect.right(), rect.top() + rect.height() / 2);
+        break;
+    case Section::SectionType::ReadingData:
+    case Section::SectionType::WritingData:
+    case Section::SectionType::WritingGarbage:
+    case Section::SectionType::WaitingInTriState:
+        painter.drawRect(rect);
+        break;
+    default:
+        break;
+    }
+
+    painter.setPen(Qt::transparent);
+    switch (section.type) {
+    case Section::SectionType::WritingGarbage:
+        painter.setBrush(Qt::BDiagPattern);
+        painter.drawRect(rect);
+        break;
+    case Section::SectionType::WaitingInTriState:
+    case Section::SectionType::SignalUnknown:
+        painter.setBrush(Qt::Dense6Pattern);
+        painter.drawRect(rect);
+        break;
+    default:
+        break;
+    }
+
+    auto label = QString("");
+    painter.setPen(QColor(Qt::white));
+
+    switch (section.type) {
+    case Section::SectionType::WritingData:
+        label = QString("WR");
+        break;
+    case Section::SectionType::WritingGarbage:
+        label = QString("WR GARBAGE");
+        break;
+    case Section::SectionType::WaitingInTriState:
+        painter.setPen(COLOR_TEXT);
+        label = QString("HZ");
+        break;
+    case Section::SectionType::ReadingData:
+        label = QString("RD");
+        break;
+    default:
+        break;
+    }
+    painter.setFont(QFont());
+    painter.drawText(rect.left() + 5, rect.bottom() - 5, label);
+
+    QFont font;
+    font.setPixelSize(10);
+    font.setItalic(true);
+    painter.setPen(COLOR_BKG_LINE);
+    painter.setFont(font);
+
+    switch (section.type) {
+    case Section::SectionType::SignalHigh:
+        painter.drawText(rect.left() + 2, rect.top() + 10, "High");
+        break;
+    case Section::SectionType::SignalLow:
+        painter.drawText(rect.left() + 2, rect.bottom() - 2, "Low");
+        break;
+    case Section::SectionType::SignalTriState:
+        painter.drawText(rect.left() + 2, rect.top() + rect.height() / 2 - 2, "HZ");
+        break;
     }
 }
 
@@ -236,9 +295,13 @@ void SectionWidget::onContextMenuRequested(QPointF point)
     addMenu->addAction(QIcon(":/assets/processor.svg"), "Component", this, [&] { FieldsDialog::addComponentDialog(m_project); });
     addMenu->addAction(QIcon(":/assets/bus.svg"), "Bus", this, [&] { FieldsDialog::addBusDialog(m_project); });
     addMenu->addAction(QIcon(":/assets/event.svg"), "Event", this, [&] { FieldsDialog::addEventDialog(m_project); });
-    addMenu->addAction(QIcon(":/assets/section.svg"), "Section", this, [&] { FieldsDialog::addSectionDialog(m_project); });
+    addMenu->addAction(QIcon(":/assets/section.svg"), "Section", this, [&] {
+        SectionDialog dialog(m_project, s.uuid);
+        dialog.exec();
+    });
     auto editAction = sectionMenu.addAction("Edit", this, [&] {
-        FieldsDialog::editSectionDialog(m_project, s.uuid);
+        SectionDialog dialog(m_project, s.uuid);
+        dialog.exec();
     });
     editAction->setEnabled(onSection);
     sectionMenu.addSeparator();

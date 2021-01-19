@@ -1,5 +1,6 @@
 #include "componentsdock.h"
 #include "fieldsdialog.h"
+#include "sectiondialog.h"
 #include <QLabel>
 #include <QMenu>
 #include <QToolBar>
@@ -79,7 +80,8 @@ void ComponentsDock::addComponent()
 
 void ComponentsDock::addSection()
 {
-    FieldsDialog::addSectionDialog(m_project);
+    SectionDialog dialog(m_project);
+    dialog.exec();
 }
 
 void ComponentsDock::onProjectChanged()

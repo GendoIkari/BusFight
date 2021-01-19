@@ -14,7 +14,8 @@ protected:
 private:
     const QColor COLOR_TEXT = QColor("#2A3950");
     const QColor COLOR_BKG_LINE = QColor("#7D92B3");
-    const QColor COLOR_BKG_WRITE = QColor("#E66363");
+    const QColor COLOR_BKG_GARBAGE = QColor("#E66363");
+    const QColor COLOR_BKG_WRITE = QColor("#E6CA63");
     const QColor COLOR_BKG_READ = QColor("#8ED1A4");
     const QColor COLOR_BKG_BUS = QColor("#E8EDD3");
     const int MARGINS = 10;
@@ -33,6 +34,7 @@ private:
     void drawHeader(QPainter& painter);
     void drawEvents(QPainter& painter);
     void drawSections(QPainter& painter);
+    void drawSection(QPainter& painter, const Section& section, QRect rect);
     void drawTimePoint(int ns, QPainter& painter);
 
 private slots:

@@ -22,6 +22,8 @@ set(PROJECT_SOURCES
         sectionwidget.h
         fieldsdialog.cpp
         fieldsdialog.h
+        sectiondialog.cpp
+        sectiondialog.h
         componentsdock.cpp
         componentsdock.h
         entities.cpp

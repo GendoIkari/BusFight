@@ -25,6 +25,10 @@ struct Section {
         ReadingData,
         WritingData,
         WritingGarbage,
+        SignalHigh,
+        SignalLow,
+        SignalTriState,
+        SignalUnknown,
     };
 
     QUuid uuid;
@@ -37,7 +41,13 @@ struct Section {
 };
 
 struct Bus {
+    enum class BusType {
+        Parallel = 0,
+        Signal,
+    };
+
     QUuid uuid;
+    BusType type;
     QString name;
     QVector<Section> sections;
 };
@@ -69,6 +79,7 @@ public:
     void removeSection(const QUuid& uuid);
     void removeComponent(const QUuid& uuid);
     QPair<int, int> absoluteRange(const Section& section) const;
+    QPair<int, int> absoluteRange(const QUuid& startEvent, int startOffset, const QUuid& endEvent, int endOffset) const;
 
     QJsonDocument toJson() const;
     void fromJson(QJsonDocument doc);

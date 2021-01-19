@@ -202,6 +202,13 @@ QPair<int, int> Project::absoluteRange(const Section& section) const
     return { sectionStart, sectionEnd };
 }
 
+QPair<int, int> Project::absoluteRange(const QUuid& startEvent, int startOffset, const QUuid& endEvent, int endOffset) const
+{
+    int sectionStart = event(startEvent).timeNS + startOffset;
+    int sectionEnd = event(endEvent).timeNS + endOffset;
+    return { sectionStart, sectionEnd };
+}
+
 QJsonDocument Project::toJson() const
 {
 
@@ -210,6 +217,7 @@ QJsonDocument Project::toJson() const
         QJsonObject bObj;
         bObj["uuid"] = bus.uuid.toString();
         bObj["name"] = bus.name;
+        bObj["type"] = int(bus.type);
         QJsonArray sectionsObj;
         for (auto& section : bus.sections) {
             QJsonObject sObj;
@@ -285,6 +293,7 @@ void Project::fromJson(QJsonDocument doc)
         auto busObj = bus.toObject();
         auto busEntity = Bus {
             .uuid = busObj["uuid"].toString(),
+            .type = Bus::BusType(busObj["type"].toInt()),
             .name = busObj["name"].toString(),
         };
         for (const auto& section : busObj["sections"].toArray()) {
