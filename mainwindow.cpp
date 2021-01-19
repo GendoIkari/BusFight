@@ -4,6 +4,7 @@
 #include <QFileDialog>
 #include <QMenu>
 #include <QMenuBar>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -37,9 +38,28 @@ void MainWindow::buildMenus()
     saveAction->setEnabled(!m_projectFileName.isEmpty());
     projectMenu->addAction(
         "Save As", this, [=] {
-            auto newPath = QFileDialog::getSaveFileName(this, "Save Project", "", "*.fight");
-            if (newPath.isEmpty())
+            QString filter = "BusFight Project (*.fight)";
+            auto dialog = new QFileDialog(this, "Save Project", ".", filter);
+            dialog->setAcceptMode(QFileDialog::AcceptMode::AcceptSave);
+            dialog->setFileMode(QFileDialog::FileMode::AnyFile);
+            dialog->setDefaultSuffix("fight");
+            dialog->setOption(QFileDialog::Option::DontConfirmOverwrite);
+            dialog->exec();
+            if (dialog->selectedFiles().isEmpty())
                 return;
+            auto newPath = dialog->selectedFiles().first();
+            // We need to do that because Qt QFileDialog is bugged with defaultSuffix.
+            if (QFile(newPath).exists()) {
+                QMessageBox msgBox;
+                msgBox.setText("Do you want to overwrite the file?");
+                msgBox.setInformativeText(newPath);
+                msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard);
+                msgBox.setDefaultButton(QMessageBox::Save);
+                int choice = msgBox.exec();
+                if (choice == QMessageBox::Discard)
+                    return;
+            }
+
             m_projectFileName = newPath;
             saveAction->setEnabled(true);
             saveProject();
