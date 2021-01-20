@@ -17,10 +17,15 @@ private:
     QString m_projectFileName;
     SectionWidget* m_centralWidget = nullptr;
     ComponentsDock* m_componentsDock = nullptr;
+    bool m_dirty = false;
 
     void buildUI();
     void buildMenus();
     void buildDocks();
     void saveProject();
     void loadProject();
+    void updateTitle();
+
+private slots:
+    void onProjectChanged();
 };

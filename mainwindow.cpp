@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
     buildUI();
+    connect(&m_project, &Project::projectChanged, this, &MainWindow::onProjectChanged);
 }
 
 MainWindow::~MainWindow()
@@ -18,7 +19,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::buildUI()
 {
-    setWindowTitle("Bus Fight!");
+    updateTitle();
 
     m_centralWidget = new SectionWidget(m_project, this);
     setCentralWidget(m_centralWidget);
@@ -92,6 +93,8 @@ void MainWindow::saveProject()
     QFile saveFile(m_projectFileName);
     saveFile.open(QFile::ReadWrite | QFile::Truncate);
     saveFile.write(doc.toJson());
+    m_dirty = false;
+    updateTitle();
 }
 
 void MainWindow::loadProject()
@@ -100,4 +103,22 @@ void MainWindow::loadProject()
     loadFile.open(QFile::ReadOnly);
     auto doc = QJsonDocument::fromJson(loadFile.readAll());
     m_project.fromJson(doc);
+    m_dirty = false;
+    updateTitle();
+}
+
+void MainWindow::updateTitle()
+{
+    QString title = "Bus Fight!";
+    if (!m_projectFileName.isEmpty())
+        title += QString(" - %1").arg(m_projectFileName);
+    if (m_dirty)
+        title += " *";
+    setWindowTitle(title);
+}
+
+void MainWindow::onProjectChanged()
+{
+    m_dirty = true;
+    updateTitle();
 }
