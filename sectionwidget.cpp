@@ -114,7 +114,15 @@ void SectionWidget::drawSections(QPainter& painter)
 {
     int usedY = EVENT_NAME_Y;
 
-    for (auto& bus : m_project.buses()) {
+    QVector<Bus> sortedBuses = m_project.buses();
+    std::sort(sortedBuses.begin(), sortedBuses.end(), [&](Bus a, Bus b) {
+        if (a.type == Bus::BusType::Signal && b.type == Bus::BusType::Parallel)
+            return true;
+        if (b.type == Bus::BusType::Signal && a.type == Bus::BusType::Parallel)
+            return false;
+        return a.name < b.name;
+    });
+    for (auto& bus : sortedBuses) {
         if (bus.sections.isEmpty())
             continue;
 
@@ -135,7 +143,13 @@ void SectionWidget::drawSections(QPainter& painter)
         painter.drawText(MARGINS + 5, firstSectionY + 15, bus.name);
 
         int sectionI = 0;
-        for (auto& componentUuid : sectionsByComponent.keys()) {
+        QVector<QUuid> sortedComponents = sectionsByComponent.keys().toVector();
+        std::sort(sortedComponents.begin(), sortedComponents.end(), [&](QUuid a, QUuid b) {
+            auto aComp = m_project.component(a);
+            auto bComp = m_project.component(b);
+            return aComp.name < bComp.name;
+        });
+        for (auto& componentUuid : sortedComponents) {
             auto component = m_project.component(componentUuid);
             auto y = firstSectionY + SECTION_SPACING + SECTION_SPACING * sectionI + SECTION_BOX_HEIGHT * sectionI;
             int minimumX = 9999;
