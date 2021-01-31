@@ -116,10 +116,6 @@ void SectionWidget::drawSections(QPainter& painter)
 
     QVector<Bus> sortedBuses = m_project.buses();
     std::sort(sortedBuses.begin(), sortedBuses.end(), [&](Bus a, Bus b) {
-        if (a.type == Bus::BusType::Signal && b.type == Bus::BusType::Parallel)
-            return true;
-        if (b.type == Bus::BusType::Signal && a.type == Bus::BusType::Parallel)
-            return false;
         return a.name < b.name;
     });
     for (auto& bus : sortedBuses) {
