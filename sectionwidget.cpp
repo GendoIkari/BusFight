@@ -6,16 +6,15 @@
 #include <QPainter>
 #include <QSet>
 
-SectionWidget::SectionWidget(Project& project, QWidget* parent)
-    : QWidget(parent)
-    , m_project(project)
+SectionWidget::SectionWidget(Project &project, QWidget *parent)
+    : QWidget(parent), m_project(project)
 {
     buildUI();
     connect(&project, &Project::projectChanged, this, &SectionWidget::onProjectChanged);
     onProjectChanged();
 }
 
-void SectionWidget::paintEvent(QPaintEvent*)
+void SectionWidget::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
@@ -30,15 +29,17 @@ QPair<int, int> SectionWidget::timeWindow()
     int min = 0;
     int max = 0;
 
-    for (auto& event : m_project.events()) {
+    for (auto &event : m_project.events())
+    {
         if (event.timeNS < min)
             min = event.timeNS;
         if (event.timeNS > max)
             max = event.timeNS;
     }
 
-    for (auto& bus : m_project.buses())
-        for (auto& section : bus.sections) {
+    for (auto &bus : m_project.buses())
+        for (auto &section : bus.sections)
+        {
             int sectionStart = m_project.absoluteRange(section).first;
             int sectionEnd = m_project.absoluteRange(section).second;
             Q_ASSERT(sectionEnd > sectionStart);
@@ -49,7 +50,7 @@ QPair<int, int> SectionWidget::timeWindow()
                 max = sectionEnd;
         }
 
-    return { min - m_nsMargin, max + m_nsMargin };
+    return {min - m_nsMargin, max + m_nsMargin};
 }
 
 int SectionWidget::xFromNS(int ns)
@@ -72,7 +73,7 @@ void SectionWidget::buildUI()
     connect(this, &SectionWidget::customContextMenuRequested, this, &SectionWidget::onContextMenuRequested);
 }
 
-void SectionWidget::drawHeader(QPainter& painter)
+void SectionWidget::drawHeader(QPainter &painter)
 {
     auto width = geometry().width();
 
@@ -81,10 +82,11 @@ void SectionWidget::drawHeader(QPainter& painter)
 
     QSet<int> timePoints;
 
-    for (auto& event : m_project.events())
+    for (auto &event : m_project.events())
         timePoints.insert(event.timeNS);
-    for (auto& bus : m_project.buses())
-        for (auto& section : bus.sections) {
+    for (auto &bus : m_project.buses())
+        for (auto &section : bus.sections)
+        {
             auto range = m_project.absoluteRange(section);
             timePoints.insert(range.first);
             timePoints.insert(range.second);
@@ -94,11 +96,12 @@ void SectionWidget::drawHeader(QPainter& painter)
         drawTimePoint(t, painter);
 }
 
-void SectionWidget::drawEvents(QPainter& painter)
+void SectionWidget::drawEvents(QPainter &painter)
 {
     auto bottomY = geometry().bottom() - MARGINS;
 
-    for (auto& event : m_project.events()) {
+    for (auto &event : m_project.events())
+    {
         QFontMetrics fm(painter.font());
         auto textRect = fm.boundingRect(event.name);
         auto eventX = MARGINS + xFromNS(event.timeNS);
@@ -110,20 +113,20 @@ void SectionWidget::drawEvents(QPainter& painter)
     }
 }
 
-void SectionWidget::drawSections(QPainter& painter)
+void SectionWidget::drawSections(QPainter &painter)
 {
     int usedY = EVENT_NAME_Y;
 
     QVector<Bus> sortedBuses = m_project.buses();
-    std::sort(sortedBuses.begin(), sortedBuses.end(), [&](Bus a, Bus b) {
-        return a.name < b.name;
-    });
-    for (auto& bus : sortedBuses) {
+    std::sort(sortedBuses.begin(), sortedBuses.end(), [&](Bus a, Bus b)
+              { return a.name < b.name; });
+    for (auto &bus : sortedBuses)
+    {
         if (bus.sections.isEmpty())
             continue;
 
         QHash<QUuid, QVector<Section>> sectionsByComponent;
-        for (auto& section : bus.sections)
+        for (auto &section : bus.sections)
             sectionsByComponent[section.component].append(section);
 
         auto firstSectionY = usedY;
@@ -140,24 +143,26 @@ void SectionWidget::drawSections(QPainter& painter)
 
         int sectionI = 0;
         QVector<QUuid> sortedComponents = sectionsByComponent.keys().toVector();
-        std::sort(sortedComponents.begin(), sortedComponents.end(), [&](QUuid a, QUuid b) {
+        std::sort(sortedComponents.begin(), sortedComponents.end(), [&](QUuid a, QUuid b)
+                  {
             auto aComp = m_project.component(a);
             auto bComp = m_project.component(b);
-            return aComp.name < bComp.name;
-        });
-        for (auto& componentUuid : sortedComponents) {
+            return aComp.name < bComp.name; });
+        for (auto &componentUuid : sortedComponents)
+        {
             auto component = m_project.component(componentUuid);
             auto y = firstSectionY + SECTION_SPACING + SECTION_SPACING * sectionI + SECTION_BOX_HEIGHT * sectionI;
             int minimumX = 9999;
 
-            for (auto& section : sectionsByComponent[componentUuid]) {
+            for (auto &section : sectionsByComponent[componentUuid])
+            {
                 auto range = m_project.absoluteRange(section);
                 auto startX = MARGINS + xFromNS(range.first);
                 auto endX = MARGINS + xFromNS(range.second);
                 minimumX = std::min(startX, minimumX);
 
-                QRect sectionRect { startX, y, endX - startX, SECTION_BOX_HEIGHT };
-                m_sectionsRects.append({ sectionRect, section });
+                QRect sectionRect{startX, y, endX - startX, SECTION_BOX_HEIGHT};
+                m_sectionsRects.append({sectionRect, section});
                 drawSection(painter, section, sectionRect);
             }
 
@@ -172,11 +177,12 @@ void SectionWidget::drawSections(QPainter& painter)
     }
 }
 
-void SectionWidget::drawSection(QPainter& painter, const Section& section, QRect rect)
+void SectionWidget::drawSection(QPainter &painter, const Section &section, QRect rect)
 {
     painter.setPen(COLOR_TEXT);
 
-    switch (section.type) {
+    switch (section.type)
+    {
     case Section::SectionType::WritingGarbage:
         painter.setBrush(QBrush(COLOR_BKG_GARBAGE));
         break;
@@ -191,7 +197,8 @@ void SectionWidget::drawSection(QPainter& painter, const Section& section, QRect
         break;
     }
 
-    switch (section.type) {
+    switch (section.type)
+    {
     case Section::SectionType::SignalHigh:
         painter.drawLine(rect.left(), rect.top(), rect.right(), rect.top());
         break;
@@ -212,7 +219,8 @@ void SectionWidget::drawSection(QPainter& painter, const Section& section, QRect
     }
 
     painter.setPen(Qt::transparent);
-    switch (section.type) {
+    switch (section.type)
+    {
     case Section::SectionType::WritingGarbage:
         painter.setBrush(Qt::BDiagPattern);
         painter.drawRect(rect);
@@ -229,7 +237,8 @@ void SectionWidget::drawSection(QPainter& painter, const Section& section, QRect
     auto label = QString("");
     painter.setPen(QColor(Qt::white));
 
-    switch (section.type) {
+    switch (section.type)
+    {
     case Section::SectionType::WritingData:
         label = QString("WR");
         break;
@@ -255,7 +264,8 @@ void SectionWidget::drawSection(QPainter& painter, const Section& section, QRect
     painter.setPen(COLOR_BKG_LINE);
     painter.setFont(font);
 
-    switch (section.type) {
+    switch (section.type)
+    {
     case Section::SectionType::SignalHigh:
         painter.drawText(rect.left() + 2, rect.top() + 10, "High");
         break;
@@ -268,7 +278,7 @@ void SectionWidget::drawSection(QPainter& painter, const Section& section, QRect
     }
 }
 
-void SectionWidget::drawTimePoint(int ns, QPainter& painter)
+void SectionWidget::drawTimePoint(int ns, QPainter &painter)
 {
     auto markerX = MARGINS + xFromNS(ns);
     auto label = QString("%1").arg(ns);
@@ -292,8 +302,9 @@ void SectionWidget::onContextMenuRequested(QPointF point)
     QRect r;
     Section s;
     bool onSection = false;
-    for (auto& rect : m_sectionsRects)
-        if (rect.first.contains(point.toPoint())) {
+    for (auto &rect : m_sectionsRects)
+        if (rect.first.contains(point.toPoint()))
+        {
             r = rect.first;
             s = rect.second;
             onSection = true;
@@ -302,22 +313,24 @@ void SectionWidget::onContextMenuRequested(QPointF point)
     QMenu sectionMenu;
     sectionMenu.move(mapToGlobal(point.toPoint()));
     auto addMenu = sectionMenu.addMenu("Add");
-    addMenu->addAction(QIcon(":/assets/processor.svg"), "Component", this, [&] { FieldsDialog::addComponentDialog(m_project); });
-    addMenu->addAction(QIcon(":/assets/bus.svg"), "Bus", this, [&] { FieldsDialog::addBusDialog(m_project); });
-    addMenu->addAction(QIcon(":/assets/event.svg"), "Event", this, [&] { FieldsDialog::addEventDialog(m_project); });
-    addMenu->addAction(QIcon(":/assets/section.svg"), "Section", this, [&] {
+    addMenu->addAction(QIcon(":/assets/processor.svg"), "Component", this, [&]
+                       { FieldsDialog::addComponentDialog(m_project); });
+    addMenu->addAction(QIcon(":/assets/bus.svg"), "Bus", this, [&]
+                       { FieldsDialog::addBusDialog(m_project); });
+    addMenu->addAction(QIcon(":/assets/event.svg"), "Event", this, [&]
+                       { FieldsDialog::addEventDialog(m_project); });
+    addMenu->addAction(QIcon(":/assets/section.svg"), "Section", this, [&]
+                       {
         SectionDialog dialog(m_project, s.uuid);
-        dialog.exec();
-    });
-    auto editAction = sectionMenu.addAction("Edit", this, [&] {
+        dialog.exec(); });
+    auto editAction = sectionMenu.addAction("Edit", this, [&]
+                                            {
         SectionDialog dialog(m_project, s.uuid);
-        dialog.exec();
-    });
+        dialog.exec(); });
     editAction->setEnabled(onSection);
     sectionMenu.addSeparator();
-    auto removeAction = sectionMenu.addAction("Remove", this, [=] {
-        m_project.removeSection(s.uuid);
-    });
+    auto removeAction = sectionMenu.addAction("Remove", this, [=]
+                                              { m_project.removeSection(s.uuid); });
     removeAction->setEnabled(onSection);
     sectionMenu.exec();
 }

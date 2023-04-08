@@ -5,18 +5,19 @@
 #include "sectionwidget.h"
 #include <QMainWindow>
 
-class MainWindow : public QMainWindow {
+class MainWindow : public QMainWindow
+{
     Q_OBJECT
 
 public:
-    MainWindow(QWidget* parent = nullptr);
+    MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 private:
     Project m_project;
     QString m_projectFileName;
-    SectionWidget* m_centralWidget = nullptr;
-    ComponentsDock* m_componentsDock = nullptr;
+    SectionWidget *m_centralWidget = nullptr;
+    ComponentsDock *m_componentsDock = nullptr;
     bool m_dirty = false;
 
     void buildUI();

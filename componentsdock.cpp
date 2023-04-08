@@ -6,9 +6,8 @@
 #include <QToolBar>
 #include <QVBoxLayout>
 
-ComponentsDock::ComponentsDock(Project& project, QWidget* parent)
-    : QDockWidget(parent)
-    , m_project(project)
+ComponentsDock::ComponentsDock(Project &project, QWidget *parent)
+    : QDockWidget(parent), m_project(project)
 {
     buildUI();
     connect(&m_project, &Project::projectChanged, this, &ComponentsDock::onProjectChanged);
@@ -90,21 +89,24 @@ void ComponentsDock::onProjectChanged()
     m_busListWidget->clear();
     m_eventListWidget->clear();
 
-    for (auto& bus : m_project.buses()) {
+    for (auto &bus : m_project.buses())
+    {
         auto item = new QListWidgetItem(m_busListWidget, TypeBus);
         item->setText(bus.name);
         item->setData(DataBusUuid, bus.uuid);
         m_busListWidget->addItem(item);
     }
 
-    for (auto& event : m_project.events()) {
+    for (auto &event : m_project.events())
+    {
         auto item = new QListWidgetItem(m_eventListWidget, TypeEvent);
         item->setText(QString("%1 - %2 ns").arg(event.name).arg(event.timeNS));
         item->setData(DataEventUuid, event.uuid);
         m_eventListWidget->addItem(item);
     }
 
-    for (auto& component : m_project.components()) {
+    for (auto &component : m_project.components())
+    {
         auto item = new QListWidgetItem(m_componentListWidget, TypeComponent);
         item->setText(component.name);
         item->setData(DataComponentUuid, component.uuid);
@@ -114,59 +116,60 @@ void ComponentsDock::onProjectChanged()
     m_actionAddSection->setEnabled(m_project.events().count() > 0 && m_project.components().count() > 0 && m_project.buses().count() > 0);
 }
 
-void ComponentsDock::onBusMenuRequested(const QPointF& point)
+void ComponentsDock::onBusMenuRequested(const QPointF &point)
 {
     QPoint p = m_busListWidget->mapToGlobal(point.toPoint());
     QMenu busMenu;
     busMenu.move(p);
 
     busMenu.addAction("Add", this, &ComponentsDock::addBus);
-    auto editAction = busMenu.addAction("Edit", this, [&] {
-        FieldsDialog::editBusDialog(m_project, m_busListWidget->currentItem()->data(DataBusUuid).toString());
-    });
+    auto editAction = busMenu.addAction("Edit", this, [&]
+                                        { auto uuid = QUuid::fromString(m_busListWidget->currentItem()->data(DataBusUuid).toString());
+                                        FieldsDialog::editBusDialog(m_project, uuid); });
     editAction->setEnabled(m_busListWidget->currentItem() != nullptr);
     busMenu.addSeparator();
-    auto removeAction = busMenu.addAction("Remove", this, [&] {
-        m_project.removeBus(m_busListWidget->currentItem()->data(DataBusUuid).toString());
-    });
+    auto removeAction = busMenu.addAction("Remove", this, [&]
+                                          {auto uuid = QUuid::fromString(m_busListWidget->currentItem()->data(DataBusUuid).toString());
+                                             m_project.removeBus(uuid); });
     removeAction->setEnabled(m_busListWidget->currentItem() != nullptr);
     busMenu.exec();
 }
 
-void ComponentsDock::onEventMenuRequested(const QPointF& point)
+void ComponentsDock::onEventMenuRequested(const QPointF &point)
 {
     QPoint p = m_eventListWidget->mapToGlobal(point.toPoint());
     QMenu eventMenu;
     eventMenu.move(p);
 
     eventMenu.addAction("Add", this, &ComponentsDock::addEvent);
-    auto editAction = eventMenu.addAction("Edit", this, [&] {
-        FieldsDialog::editEventDialog(m_project, m_eventListWidget->currentItem()->data(DataEventUuid).toString());
-    });
+    auto editAction = eventMenu.addAction("Edit", this, [&]
+                                          {auto uuid = QUuid::fromString(m_eventListWidget->currentItem()->data(DataEventUuid).toString());
+                                             FieldsDialog::editEventDialog(m_project, uuid); });
     editAction->setEnabled(m_eventListWidget->currentItem() != nullptr);
     eventMenu.addSeparator();
-    auto removeAction = eventMenu.addAction("Remove", this, [&] {
-        m_project.removeEvent(m_eventListWidget->currentItem()->data(DataEventUuid).toString());
-    });
+    auto removeAction = eventMenu.addAction("Remove", this, [&]
+                                            { auto uuid = QUuid::fromString(m_eventListWidget->currentItem()->data(DataEventUuid).toString());
+                                                m_project.removeEvent(uuid); });
     removeAction->setEnabled(m_eventListWidget->currentItem() != nullptr);
     eventMenu.exec();
 }
 
-void ComponentsDock::onComponentMenuRequested(const QPointF& point)
+void ComponentsDock::onComponentMenuRequested(const QPointF &point)
 {
     QPoint p = m_componentListWidget->mapToGlobal(point.toPoint());
     QMenu componentMenu;
     componentMenu.move(p);
 
     componentMenu.addAction("Add", this, &ComponentsDock::addComponent);
-    auto editAction = componentMenu.addAction("Edit", this, [&] {
-        FieldsDialog::editComponentDialog(m_project, m_componentListWidget->currentItem()->data(DataComponentUuid).toString());
-    });
+    auto editAction = componentMenu.addAction("Edit", this, [&]
+                                              {
+                                                auto uuid = QUuid::fromString( m_componentListWidget->currentItem()->data(DataComponentUuid).toString());
+                                                 FieldsDialog::editComponentDialog(m_project, uuid); });
     editAction->setEnabled(m_componentListWidget->currentItem() != nullptr);
     componentMenu.addSeparator();
-    auto removeAction = componentMenu.addAction("Remove", this, [&] {
-        m_project.removeComponent(m_componentListWidget->currentItem()->data(DataComponentUuid).toString());
-    });
+    auto removeAction = componentMenu.addAction("Remove", this, [&]
+                                                { auto uuid = QUuid::fromString(m_componentListWidget->currentItem()->data(DataComponentUuid).toString());
+                                                    m_project.removeComponent(uuid); });
     removeAction->setEnabled(m_componentListWidget->currentItem() != nullptr);
     componentMenu.exec();
 }

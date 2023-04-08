@@ -6,7 +6,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 
-MainWindow::MainWindow(QWidget* parent)
+MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     buildUI();
@@ -32,13 +32,14 @@ void MainWindow::buildMenus()
 {
     auto projectMenu = new QMenu("Project", this);
     auto saveAction = projectMenu->addAction(
-        "&Save", this, [=] {
-            saveProject();
-        },
+        "&Save", this, [=]
+        { saveProject(); },
         QKeySequence("Ctrl+S"));
     saveAction->setEnabled(!m_projectFileName.isEmpty());
+
     projectMenu->addAction(
-        "Save As", this, [=] {
+        "Save As", this, [=]
+        {
             QString filter = "BusFight Project (*.fight)";
             auto dialog = new QFileDialog(this, "Save Project", ".", filter);
             dialog->setAcceptMode(QFileDialog::AcceptMode::AcceptSave);
@@ -63,19 +64,20 @@ void MainWindow::buildMenus()
 
             m_projectFileName = newPath;
             saveAction->setEnabled(true);
-            saveProject();
-        },
+            saveProject(); },
         QKeySequence("Ctrl+Shift+S"));
+
     projectMenu->addSeparator();
+
     projectMenu->addAction(
-        "&Open", this, [=] {
+        "&Open", this, [=]
+        {
             auto newPath = QFileDialog::getOpenFileName(this, "Open Project", "", "*.fight");
             if (newPath.isEmpty())
                 return;
             m_projectFileName = newPath;
             saveAction->setEnabled(true);
-            loadProject();
-        },
+            loadProject(); },
         QKeySequence("Ctrl+O"));
 
     menuBar()->addMenu(projectMenu);

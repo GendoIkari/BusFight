@@ -3,13 +3,14 @@
 #include "entities.h"
 #include <QWidget>
 
-class SectionWidget : public QWidget {
+class SectionWidget : public QWidget
+{
     Q_OBJECT
 public:
-    explicit SectionWidget(Project& project, QWidget* parent = nullptr);
+    explicit SectionWidget(Project &project, QWidget *parent = nullptr);
 
 protected:
-    void paintEvent(QPaintEvent* event) override;
+    void paintEvent(QPaintEvent *event) override;
 
 private:
     const QColor COLOR_TEXT = QColor("#2A3950");
@@ -26,16 +27,16 @@ private:
 
     int m_nsMargin = 50;
     QVector<QPair<QRect, Section>> m_sectionsRects;
-    Project& m_project;
+    Project &m_project;
 
     QPair<int, int> timeWindow();
     int xFromNS(int ns);
     void buildUI();
-    void drawHeader(QPainter& painter);
-    void drawEvents(QPainter& painter);
-    void drawSections(QPainter& painter);
-    void drawSection(QPainter& painter, const Section& section, QRect rect);
-    void drawTimePoint(int ns, QPainter& painter);
+    void drawHeader(QPainter &painter);
+    void drawEvents(QPainter &painter);
+    void drawSections(QPainter &painter);
+    void drawSection(QPainter &painter, const Section &section, QRect rect);
+    void drawTimePoint(int ns, QPainter &painter);
 
 private slots:
     void onProjectChanged();

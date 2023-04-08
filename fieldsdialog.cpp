@@ -5,14 +5,14 @@
 #include <QLabel>
 #include <QMessageBox>
 
-FieldsDialog::FieldsDialog(const QString& title, QWidget* parent)
+FieldsDialog::FieldsDialog(const QString &title, QWidget *parent)
     : QDialog(parent)
 {
     setWindowTitle(title);
     buildUI();
 }
 
-void FieldsDialog::addEventDialog(Project& project)
+void FieldsDialog::addEventDialog(Project &project)
 {
     FieldsDialog dialog("Add Event");
     dialog.addField("Name", FieldType::String);
@@ -23,10 +23,10 @@ void FieldsDialog::addEventDialog(Project& project)
 
     auto name = dialog.valueAsString("Name");
     auto ns = dialog.valueAsInt("Time(ns)");
-    project.addEvent({ .name = name, .timeNS = ns });
+    project.addEvent({.name = name, .timeNS = ns});
 }
 
-void FieldsDialog::addComponentDialog(Project& project)
+void FieldsDialog::addComponentDialog(Project &project)
 {
     FieldsDialog dialog("Add Component");
     dialog.addField("Name", FieldType::String);
@@ -35,28 +35,28 @@ void FieldsDialog::addComponentDialog(Project& project)
         return;
 
     auto name = dialog.valueAsString("Name");
-    project.addComponent({ .name = name });
+    project.addComponent({.name = name});
 }
 
-void FieldsDialog::addBusDialog(Project& project)
+void FieldsDialog::addBusDialog(Project &project)
 {
     FieldsDialog dialog("Add Bus");
     dialog.addField("Name", FieldType::String);
     dialog.addComboBox("Type", {
-                                   { "Parallel", int(Bus::BusType::Parallel) },
-                                   { "Signal", int(Bus::BusType::Signal) },
+                                   {"Parallel", int(Bus::BusType::Parallel)},
+                                   {"Signal", int(Bus::BusType::Signal)},
                                },
-        int(Bus::BusType::Parallel));
+                       int(Bus::BusType::Parallel));
     dialog.exec();
     if (!dialog.isAccepted())
         return;
 
     auto name = dialog.valueAsString("Name");
     auto type = dialog.valueAsInt("Type");
-    project.addBus({ .type = Bus::BusType(type), .name = name });
+    project.addBus({.type = Bus::BusType(type), .name = name});
 }
 
-void FieldsDialog::editEventDialog(Project& project, const QUuid& eventUuid)
+void FieldsDialog::editEventDialog(Project &project, const QUuid &eventUuid)
 {
     auto event = project.event(eventUuid);
     FieldsDialog dialog("Edit Event");
@@ -72,7 +72,7 @@ void FieldsDialog::editEventDialog(Project& project, const QUuid& eventUuid)
     project.editEvent(eventUuid, newName, newTime);
 }
 
-void FieldsDialog::editBusDialog(Project& project, const QUuid& busUuid)
+void FieldsDialog::editBusDialog(Project &project, const QUuid &busUuid)
 {
     auto bus = project.bus(busUuid);
     FieldsDialog dialog("Edit Bus");
@@ -86,7 +86,7 @@ void FieldsDialog::editBusDialog(Project& project, const QUuid& busUuid)
     project.editBus(busUuid, newName);
 }
 
-void FieldsDialog::editComponentDialog(Project& project, const QUuid& componentUuid)
+void FieldsDialog::editComponentDialog(Project &project, const QUuid &componentUuid)
 {
     auto component = project.component(componentUuid);
     FieldsDialog dialog("Edit Component");
@@ -100,7 +100,7 @@ void FieldsDialog::editComponentDialog(Project& project, const QUuid& componentU
     project.editComponent(componentUuid, newName);
 }
 
-void FieldsDialog::addField(const QString& label, FieldsDialog::FieldType type, QVariant defaultValue)
+void FieldsDialog::addField(const QString &label, FieldsDialog::FieldType type, QVariant defaultValue)
 {
     Q_ASSERT(type != FieldType::ComboBox);
 
@@ -117,7 +117,8 @@ void FieldsDialog::addField(const QString& label, FieldsDialog::FieldType type, 
 
     m_fieldsValidate[label] = false;
 
-    if (defaultValue.isValid()) {
+    if (defaultValue.isValid())
+    {
         m_fieldsValidate[label] = true;
         m_fields[label] = defaultValue;
         lineEdit->setText(defaultValue.toString());
@@ -125,14 +126,14 @@ void FieldsDialog::addField(const QString& label, FieldsDialog::FieldType type, 
 
     checkParameters();
 
-    connect(lineEdit, &QLineEdit::textChanged, this, [=] {
+    connect(lineEdit, &QLineEdit::textChanged, this, [=]
+            {
         m_fields[label] = lineEdit->text();
         m_fieldsValidate[label] = !lineEdit->text().isEmpty() && lineEdit->hasAcceptableInput();
-        checkParameters();
-    });
+        checkParameters(); });
 }
 
-void FieldsDialog::addComboBox(const QString& label, QVector<QPair<QString, QVariant>> choices, QVariant defaultValue)
+void FieldsDialog::addComboBox(const QString &label, QVector<QPair<QString, QVariant>> choices, QVariant defaultValue)
 {
     Q_ASSERT(choices.count() > 0);
 
@@ -141,7 +142,7 @@ void FieldsDialog::addComboBox(const QString& label, QVector<QPair<QString, QVar
     auto combo = new QComboBox(this);
     rowLayout->addWidget(combo);
     m_fieldsLayout->addLayout(rowLayout);
-    for (auto& choice : choices)
+    for (auto &choice : choices)
         combo->addItem(choice.first, choice.second);
 
     if (m_fieldsValidate.isEmpty())
@@ -149,31 +150,34 @@ void FieldsDialog::addComboBox(const QString& label, QVector<QPair<QString, QVar
 
     m_fieldsValidate[label] = true;
     int defaultIndex = -1;
-    if (defaultValue.isValid()) {
+    if (defaultValue.isValid())
+    {
         m_fields[label] = defaultValue;
-        for (auto& choice : choices) {
+        for (auto &choice : choices)
+        {
             defaultIndex++;
             if (choice.second == defaultValue)
                 combo->setCurrentIndex(defaultIndex);
         }
-    } else
+    }
+    else
         m_fields[label] = choices.first().second;
 
     checkParameters();
 
-    connect(combo, &QComboBox::currentTextChanged, this, [=] {
+    connect(combo, &QComboBox::currentTextChanged, this, [=]
+            {
         m_fields[label] = combo->currentData();
         m_fieldsValidate[label] = combo->currentIndex() != -1;
-        checkParameters();
-    });
+        checkParameters(); });
 }
 
-QString FieldsDialog::valueAsString(const QString& label) const
+QString FieldsDialog::valueAsString(const QString &label) const
 {
     return m_fields[label].toString();
 }
 
-int FieldsDialog::valueAsInt(const QString& label) const
+int FieldsDialog::valueAsInt(const QString &label) const
 {
     return m_fields[label].toInt();
 }
@@ -210,7 +214,8 @@ void FieldsDialog::onOkClicked()
 void FieldsDialog::checkParameters()
 {
     for (bool ok : qAsConst(m_fieldsValidate))
-        if (!ok) {
+        if (!ok)
+        {
             m_okButton->setEnabled(false);
             return;
         }
