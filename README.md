@@ -2,6 +2,10 @@
 
 BusFight is a simple Linux utilty program to visualize how devices are reading and writing signals on a bus.
 
+## Binary
+
+On Github you can see the **releases**. A Linux *binary* should be present in **every** release, automatically compiled in an Ubuntu environment. You can see the script in `.github/workflows/release.yml`.
+
 ## Compilation
 
 BusFight is currently built with *Qt6*. It needs the `Widgets` and the `Svg` development headers to compile. You can look at `.github/workflows/compilation.yml` for detailed info.
