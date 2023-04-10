@@ -4,5 +4,6 @@
         <file>assets/event.svg</file>
         <file>assets/section.svg</file>
         <file>assets/bus.svg</file>
+        <file>assets/icon.svg</file>
     </qresource>
 </RCC>
